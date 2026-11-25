@@ -23,26 +23,51 @@ if 'nome_visitante' not in st.session_state:
     st.session_state.nome_visitante = 'Visitante'
 
 @st.cache_resource(show_spinner=False)
+
 def iniciar_assistente():
     # Instancia um pipeline equivalente ao do app.py, sem importar nem alterar
     # esse arquivo (o app.py executa a interface quando importado).
+
+    print("DIAGNOSTICO 1: Iniciando importacao das bibliotecas", flush=True)
+
     from langchain_community.document_loaders import PyPDFLoader
     from langchain_text_splitters import RecursiveCharacterTextSplitter
     from langchain_chroma import Chroma
     from langchain_groq import ChatGroq
     from langchain_huggingface import HuggingFaceEmbeddings
 
+
+       print("DIAGNOSTICO 2: Bibliotecas carregadas. Iniciando leitura dos PDFs", flush=True)
+
     arquivos = ['Base_Unica_Diabetes_Posologia_Mapeada.pdf', 'GuiaDiabetes.pdf']
     documentos = []
+
+  
     for nome in arquivos:
         caminho = BASE_DIR / nome
         if not caminho.is_file():
             raise FileNotFoundError(f'Arquivo necessário não encontrado: {nome}')
         documentos.extend(PyPDFLoader(str(caminho)).load())
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+
     chunks = splitter.split_documents(documentos)
-    embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
-   
+
+    # Confirma que os PDFs foram processados.
+    print(
+        f"DIAGNOSTICO 3: PDFs processados. Total de trechos: {len(chunks)}",
+        flush=True
+    )
+
+    # Marca o início do carregamento do modelo.
+    print("DIAGNOSTICO 4: Iniciando modelo Hugging Face", flush=True)
+
+    embeddings = HuggingFaceEmbeddings(
+        model_name='sentence-transformers/all-MiniLM-L6-v2'
+    )
+
+    # Confirma que o modelo terminou de carregar.
+    print("DIAGNOSTICO 5: Modelo Hugging Face carregado", flush=True)
+
     # Cria o banco vetorial em lotes menores.
     # Isso ajuda a reduzir o consumo de memória.
 
@@ -50,6 +75,7 @@ def iniciar_assistente():
 
     if not chunks:
         raise RuntimeError("Nenhum texto foi extraído dos PDFs.")
+)
 
     total = len(chunks)
     print(f"INICIO DA INDEXACAO: {total} trechos", flush=True)
