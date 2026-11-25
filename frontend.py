@@ -37,15 +37,12 @@ def iniciar_assistente():
     from langchain_huggingface import HuggingFaceEmbeddings
 
 
-    from langchain_huggingface import HuggingFaceEmbeddings
-
-    print("DIAGNOSTICO 2: Bibliotecas carregadas. Iniciando leitura dos PDFs", flush=True)
+       print("DIAGNOSTICO 2: Bibliotecas carregadas. Iniciando leitura dos PDFs", flush=True)
 
     arquivos = ['Base_Unica_Diabetes_Posologia_Mapeada.pdf', 'GuiaDiabetes.pdf']
     documentos = []
 
-    arquivos = ['Base_Unica_Diabetes_Posologia_Mapeada.pdf', 'GuiaDiabetes.pdf']
-    documentos = []
+  
     for nome in arquivos:
         caminho = BASE_DIR / nome
         if not caminho.is_file():
