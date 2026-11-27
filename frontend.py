@@ -5,6 +5,7 @@ Novos PDFs em documentos/ são reconhecidos após atualização/recarga da aplic
 """
 from pathlib import Path
 import hashlib
+import logging
 import os
 
 import streamlit as st
@@ -38,7 +39,7 @@ if "nome_visitante" not in st.session_state:
 
 
 from falabula_core import (
-    listar_arquivos, assinatura, carregar_paginas, responder_pergunta,
+    listar_arquivos, assinatura as calcular_assinatura, carregar_paginas, responder_pergunta,
     pergunta_catalogo, resposta_catalogo, identificar_documentos, documento_geral, chave_documento
 )
 
@@ -48,7 +49,7 @@ def listar_bulas():
 
 
 def assinatura_documentos(arquivos):
-    return assinatura(arquivos)
+    return calcular_assinatura(arquivos)
 
 
 @st.cache_resource(show_spinner=False, max_entries=2)
@@ -93,7 +94,7 @@ def mostrar_rodape():
     )
 
 
-def responder(pergunta, identificacao):
+def responder(pergunta):
     arquivos = listar_bulas()
     if pergunta_catalogo(pergunta) and not identificar_documentos(pergunta, arquivos):
         return resposta_catalogo(arquivos), []
@@ -153,7 +154,6 @@ else:
         unsafe_allow_html=True,
     )
     arquivos = listar_bulas()
-    assinatura = assinatura_documentos(arquivos)
     with st.sidebar:
         st.markdown("### FalaBula")
         st.write(f"Olá, **{st.session_state.nome_visitante}**.")
@@ -167,7 +167,7 @@ else:
         st.divider()
         st.caption(f"Bulas cadastradas: {sum(not documento_geral(p) for p in arquivos)}")
         st.caption(f"Documentos gerais: {sum(documento_geral(p) for p in arquivos)}")
-        st.caption("Versão 2.5.2 — correção de carregamento — 27/11/2026")
+        st.caption("Versão 2.5.3 — correção de consulta — 27/11/2026")
         with st.expander("Documentos disponíveis"):
             for arquivo in arquivos:
                 st.caption(chave_documento(arquivo))
@@ -241,7 +241,7 @@ else:
                 st.markdown(pergunta)
             with st.chat_message("assistant", avatar="💬"):
                 try:
-                    resposta, fontes = responder(pergunta, assinatura)
+                    resposta, fontes = responder(pergunta)
                 except APITimeoutError:
                     st.error("O serviço de IA não respondeu no prazo. Tente novamente.")
                 except RateLimitError:
@@ -250,7 +250,8 @@ else:
                     st.error("Não foi possível conectar ao serviço de IA. Tente novamente.")
                 except APIStatusError:
                     st.error("O serviço de IA retornou um erro. Consulte os logs do Streamlit.")
-                except Exception:
+                except Exception as erro:
+                    logging.getLogger(__name__).error("Falha na consulta FalaBula: %s", type(erro).__name__)
                     st.error("Não foi possível consultar os documentos. Consulte os logs do Streamlit.")
                 else:
                     st.markdown(resposta)
