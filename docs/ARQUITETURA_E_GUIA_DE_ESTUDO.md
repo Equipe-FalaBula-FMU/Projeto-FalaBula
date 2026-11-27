@@ -1,6 +1,10 @@
-# FalaBula 2.5 — Arquitetura técnica
+# FalaBula 2.5.0 — Arquitetura técnica
 
 Documentação técnica da aplicação. Baseado nos arquivos da branch main: [frontend.py](../frontend.py), [falabula_core.py](../falabula_core.py), [app.py](../app.py), [requirements.txt](../requirements.txt) e [style.css](../style.css). Descreve a implementação, não uma certificação da implantação ou da qualidade clínica.
+
+## Versão estável 2.5.0
+
+Rodapé institucional com créditos à Equipe FalaBula e ressalva sobre direitos de terceiros. Nenhuma alteração na lógica de recuperação ou geração da versão 2.5. A versão é referência acadêmica; não representa certificação clínica.
 
 ## Atualização 2.5
 
