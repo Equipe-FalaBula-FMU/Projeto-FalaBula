@@ -87,7 +87,7 @@ def mostrar_rodape():
         '<strong>FalaBula</strong> | Projeto acadêmico de Inteligência Artificial — FIAM-FMU'
         '<br>© 2026 Equipe FalaBula — Direitos autorais sobre o conteúdo original do projeto.'
         '<br>Documentos de terceiros pertencem aos respectivos titulares.'
-        '<br>Versão 2.5.1 · Informação responsável</div>',
+        '</div>',
         unsafe_allow_html=True,
     )
 
