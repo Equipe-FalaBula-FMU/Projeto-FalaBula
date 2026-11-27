@@ -20,6 +20,14 @@ class ConsultasGerais(unittest.TestCase):
         self.assertTrue(fontes)
         self.assertTrue(fontes[0].startswith("doencas/diabetes.pdf"))
 
+    def test_geral_nao_mistura_bulas_quando_existe_guia(self):
+        self.base[chave_documento(self.d)] = [
+            (i, "Diabetes: classificação e tipos de diabetes") for i in range(1, 7)
+        ]
+        _, fontes = responder_pergunta("Quais tipos de diabetes existem?", self.arquivos, self.base, "")
+        self.assertEqual(len(fontes), 6)
+        self.assertTrue(all(f.startswith("doencas/diabetes.pdf") for f in fontes))
+
     def test_medicamento_isolado(self):
         self.assertEqual(identificar_documentos("Para que serve Monjaro?", self.arquivos), [self.m])
         _, fontes = responder_pergunta("Quais contraindicações constam na bula do Glifage?", self.arquivos, self.base, "")
