@@ -1,8 +1,12 @@
-# FalaBula 2.5.0 — Arquitetura técnica
+# FalaBula 2.5.3 — Arquitetura técnica
 
 Documentação técnica da aplicação. Baseado nos arquivos da branch main: [frontend.py](../frontend.py), [falabula_core.py](../falabula_core.py), [app.py](../app.py), [requirements.txt](../requirements.txt) e [style.css](../style.css). Descreve a implementação, não uma certificação da implantação ou da qualidade clínica.
 
-## Versão estável 2.5.0
+## Versão oficial estável 2.5.3
+
+Homologação manual confirmada pelo usuário em 27/11/2026. O frontend calcula a assinatura dos PDFs selecionados por meio do alias `calcular_assinatura`, evitando colisão de nomes. Consultas específicas extraem somente as bulas identificadas; consultas gerais pesquisam a base cadastrada. O cache é limitado a duas entradas. O SDK Groq usa timeout de 30 segundos e `max_retries=0`. A interface diferencia leitura documental, geração e falhas do serviço; o rodapé compacto permanece imediatamente abaixo do campo de perguntas. Preservação em `stable/v2.5.3`. Não foi realizada nova execução independente de testes automatizados nesta versão.
+
+## Versão anterior estável 2.5.0
 
 Rodapé institucional com créditos à Equipe FalaBula e ressalva sobre direitos de terceiros. Nenhuma alteração na lógica de recuperação ou geração da versão 2.5. A versão é referência acadêmica; não representa certificação clínica.
 
