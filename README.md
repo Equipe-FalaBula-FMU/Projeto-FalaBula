@@ -6,6 +6,13 @@ Projeto acadêmico de chatbot que responde a perguntas em português sobre **med
 
 > **Atenção:** conteúdo informativo, não é diagnóstico, prescrição nem orientação de tratamento individual. Não inicie, altere ou interrompa medicamentos com base nas respostas. Consulte profissional habilitado.
 
+## Links úteis
+
+- [Aplicação online — Streamlit](https://projeto-falabula-dashshp2g9tj3fr9jop2yv.streamlit.app/)
+- [Pasta de bulas no GitHub](https://github.com/Equipe-FalaBula-FMU/Projeto-FalaBula/tree/main/documentos)
+- [Enviar novos PDFs diretamente ao GitHub](https://github.com/Equipe-FalaBula-FMU/Projeto-FalaBula/upload/main/documentos)
+- [Pasta compartilhada no Google Drive](https://drive.google.com/drive/folders/1pw05qc4SeUuLskEq6FS0q0vY1_n5jcBM)
+
 ## Situação da base documental
 
 - A pasta `documentos/` contém **12 PDFs recebidos pela equipe** na [pasta compartilhada no Google Drive](https://drive.google.com/drive/folders/1pw05qc4SeUuLskEq6FS0q0vY1_n5jcBM).
@@ -14,6 +21,14 @@ Projeto acadêmico de chatbot que responde a perguntas em português sobre **med
 - Os arquivos antigos `Base_Unica_Diabetes_Posologia_Mapeada.pdf` e `GuiaDiabetes.pdf` permanecem na raiz como legado; **a nova interface `frontend.py` consulta somente a pasta `documentos/`**.
 
 ## Adicionar, substituir ou retirar bulas
+
+### Inclusão pelo navegador (sem alterar o código)
+
+Abra o [upload de documentos](https://github.com/Equipe-FalaBula-FMU/Projeto-FalaBula/upload/main/documentos), selecione os PDFs, informe uma mensagem de commit e confirme na branch `main` (ou abra um pull request se houver proteção da branch). É necessário ter permissão de escrita. Após a implantação, confira a quantidade de bulas e a lista de documentos no menu lateral do Streamlit e teste uma pergunta com o nome exato do medicamento.
+
+Para novos medicamentos, use nomes como `bula_NomeMedicamento.pdf` (extensão `.pdf` minúscula). O código reconhece documentos novos pelo nome do arquivo; sinônimos, marcas alternativas e princípios ativos não presentes no nome podem exigir atualização do catálogo `CATALOGO` em `falabula_core.py`. Um PDF inválido ou sem texto extraível pode impedir a consulta à base até sua correção ou retirada.
+
+### Procedimento geral
 
 1. Obter o PDF de fonte confiável, preferencialmente no [Bulário Eletrônico da Anvisa](https://consultas.anvisa.gov.br/#/bulario/), conferindo o medicamento, apresentação, fabricante e data da revisão.
 2. Colocar o PDF na pasta `documentos/`, mantendo um nome de arquivo identificável. O arquivo deve possuir texto selecionável: PDFs de imagem sem texto exigem preparação anterior.
@@ -55,8 +70,8 @@ A aplicação abre normalmente em http://localhost:8501. Para execução online,
 1. **Frontend** — `frontend.py` e `style.css`, com tela de acesso demonstrativa (sem autenticação) e chat responsivo.
 2. **Documentos** — PDFs em `documentos/`, listados automaticamente.
 3. **Leitura e indexação leve** — `falabula_core.py` extrai o texto dos PDFs com `pypdf`, sem carregar modelos de embeddings ou banco vetorial pesado na memória.
-4. **Consulta** — catálogo determinístico para listagens; para perguntas específicas, primeiro identifica a bula pelo nome comercial ou princípio ativo, depois recupera as páginas pertinentes exclusivamente desse PDF e usa a API Groq (`openai/gpt-oss-120b`).
-5. **Rastreabilidade** — cada resposta apresenta, em uma seção expansível, os nomes dos PDFs e as páginas dos trechos recuperados. Essa lista é uma trilha de recuperação, não uma garantia automática de correção de cada afirmação.
+4. **Consulta** — catálogo determinístico para listagens; para perguntas específicas, primeiro identifica a bula pelos nomes e aliases cadastrados ou pelo nome do arquivo novo, depois recupera as páginas pertinentes exclusivamente desse PDF e usa a API Groq (`openai/gpt-oss-120b`).
+5. **Rastreabilidade** — as respostas com trechos recuperados apresentam, em uma seção expansível, os nomes dos PDFs e as páginas dos trechos recuperados. Essa lista é uma trilha de recuperação, não uma garantia automática de correção de cada afirmação.
 6. **Atualização da base** — assinatura baseada em nome, tamanho e data de modificação dos PDFs para invalidar o índice em cache quando os documentos mudam.
 
 O arquivo `app.py` é agora um **ponto de entrada compatível com Streamlit Cloud** e carrega a mesma interface de `frontend.py`. A versão original de `app.py` permanece na branch de backup. **Ambos os comandos de execução iniciam a mesma aplicação.**
@@ -98,7 +113,7 @@ Este é um protótipo acadêmico. As respostas são limitadas às bulas presente
 
 ## Diagnóstico e testes de regressão
 
-A aplicação informa a versão do núcleo no menu lateral. O comportamento esperado:
+A interface informa a versão 2.1, de 26/11/2026, e a quantidade de PDFs no menu lateral. O comportamento esperado:
 
 - **"Quais medicamentos estão cadastrados?"**: lista exatamente todos os PDFs da pasta, sem gerar a relação por IA.
 - **"Para que serve o Mounjaro?"**: seleciona exclusivamente o PDF do Mounjaro; não utiliza excertos de insulina ou metformina.
