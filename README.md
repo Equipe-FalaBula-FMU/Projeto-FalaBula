@@ -6,6 +6,10 @@ Projeto acadêmico de chatbot que responde a perguntas em português sobre **med
 
 > **Atenção:** conteúdo informativo, não é diagnóstico, prescrição nem orientação de tratamento individual. Não inicie, altere ou interrompa medicamentos com base nas respostas. Consulte profissional habilitado.
 
+## Versão 2.3 — fontes e PDFs (27/11/2026)
+
+A seção **Fontes consultadas** agrupa páginas recuperadas por documento, mostra o nome amigável e permite abrir o PDF completo cadastrado no GitHub. Os links são gerados pelo módulo `fontes.py` a partir dos caminhos relativos dos arquivos. A seção fica recolhida por padrão. A versão no GitHub pode não corresponder à revisão mais recente do fabricante; confira a origem e a validade da bula. O link pressupõe que o arquivo esteja publicado na branch `main` do repositório oficial.
+
 ## Versão 2.2 — consultas gerais (26/11/2026)
 
 A aplicação recupera documentos também para perguntas sobre doenças e temas de saúde sem exigir o nome de um medicamento. Prioriza fontes gerais cadastradas e, na ausência delas, pode consultar bulas, explicitando quando a cobertura é insuficiente. Perguntas específicas continuam restritas à bula identificada; pedidos de prescrição não são atendidos.
@@ -89,7 +93,7 @@ A aplicação abre normalmente em http://localhost:8501. Para execução online,
 2. **Documentos** — PDFs em `documentos/`, listados automaticamente.
 3. **Leitura e indexação leve** — `falabula_core.py` extrai o texto dos PDFs com `pypdf`, sem carregar modelos de embeddings ou banco vetorial pesado na memória.
 4. **Consulta** — catálogo determinístico para listagens; para perguntas específicas, primeiro identifica a bula pelos nomes e aliases cadastrados ou pelo nome do arquivo novo, depois recupera as páginas pertinentes exclusivamente desse PDF e usa a API Groq (`openai/gpt-oss-120b`).
-5. **Rastreabilidade** — as respostas com trechos recuperados apresentam, em uma seção expansível, os nomes dos PDFs e as páginas dos trechos recuperados. Essa lista é uma trilha de recuperação, não uma garantia automática de correção de cada afirmação.
+5. **Rastreabilidade** — as respostas com trechos recuperados apresentam, em uma seção expansível, os documentos agrupados, páginas recuperadas e links para os PDFs completos. Essa lista é uma trilha de recuperação, não uma garantia automática de correção de cada afirmação.
 6. **Atualização da base** — assinatura baseada em nome, tamanho e data de modificação dos PDFs para invalidar o índice em cache quando os documentos mudam.
 
 O arquivo `app.py` é agora um **ponto de entrada compatível com Streamlit Cloud** e carrega a mesma interface de `frontend.py`. A versão original de `app.py` permanece na branch de backup. **Ambos os comandos de execução iniciam a mesma aplicação.**
@@ -113,6 +117,7 @@ O arquivo `app.py` é agora um **ponto de entrada compatível com Streamlit Clou
 ```text
 Projeto-FalaBula/
 ├── documentos/       # PDFs indexados automaticamente pelo frontend
+├── fontes.py         # agrupamento de referências e links de PDFs
 ├── falabula_core.py  # catálogo, identificação e recuperação de documentos
 ├── frontend.py       # interface atual, genérica
 ├── style.css         # estilos responsivos
@@ -136,7 +141,7 @@ Este é um protótipo acadêmico. As respostas são limitadas aos documentos pre
 
 ## Diagnóstico e testes de regressão
 
-A interface informa a versão 2.2, de 26/11/2026, e a quantidade de PDFs no menu lateral. O comportamento esperado:
+A interface informa a versão 2.3, de 27/11/2026, e a quantidade de PDFs no menu lateral. O comportamento esperado:
 
 - **"Quais medicamentos estão cadastrados?"**: lista apenas os PDFs classificados como bulas, sem gerar a relação por IA.
 - **"Para que serve o Mounjaro?"**: seleciona exclusivamente o PDF do Mounjaro; não utiliza excertos de insulina ou metformina.
