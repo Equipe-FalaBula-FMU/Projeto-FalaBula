@@ -21,6 +21,8 @@ As subpastas são reconhecidas automaticamente quando contêm PDFs. Não é nece
 
 ## Links úteis
 
+- [Guia de estudo e desenho da arquitetura](docs/ARQUITETURA_E_GUIA_DE_ESTUDO.md)
+
 - [Aplicação online — Streamlit](https://projeto-falabula-dashshp2g9tj3fr9jop2yv.streamlit.app/)
 - [Pasta de bulas no GitHub](https://github.com/Equipe-FalaBula-FMU/Projeto-FalaBula/tree/main/documentos)
 - [Enviar novos PDFs diretamente ao GitHub](https://github.com/Equipe-FalaBula-FMU/Projeto-FalaBula/upload/main/documentos)
@@ -79,6 +81,9 @@ python -m streamlit run frontend.py
 A aplicação abre normalmente em http://localhost:8501. Para execução online, configure `GROQ_API_KEY` no campo privado **Secrets** da aplicação Streamlit, nunca no GitHub. Em implantações com escopo de segredos do Streamlit, a variável precisa estar disponível ao processo.
 
 ## Arquitetura
+
+**[Arquitetura técnica e guia de estudo para apresentação](docs/ARQUITETURA_E_GUIA_DE_ESTUDO.md)** — diagrama Mermaid, tecnologias de frontend e backend, fluxo RAG, infraestrutura, limitações e roteiro de apresentação.
+
 
 1. **Frontend** — `frontend.py` e `style.css`, com tela de acesso demonstrativa (sem autenticação) e chat responsivo.
 2. **Documentos** — PDFs em `documentos/`, listados automaticamente.
