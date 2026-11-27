@@ -45,15 +45,18 @@ def normalizar(texto: str) -> str:
 
 def listar_arquivos(pasta: Path) -> list[Path]:
     return sorted(
-        [p for p in pasta.glob("*.pdf") if p.is_file()],
+        [p for p in pasta.rglob("*.pdf") if p.is_file()],
         key=lambda p: p.name.casefold(),
     ) if pasta.is_dir() else []
 
 def assinatura(arquivos: list[Path]) -> tuple:
     """Identifica alterações sem ler novamente cada PDF em cada mensagem."""
     return tuple(
-        (p.name, p.stat().st_size, p.stat().st_mtime_ns) for p in arquivos
+        (str(p), p.stat().st_size, p.stat().st_mtime_ns) for p in arquivos
     )
+
+def documento_geral(p: Path) -> bool:
+    return any(x in {"doencas", "protocolos_clinicos", "orientacoes_oficiais"} for x in p.parts[:-1])
 
 def nome_exibicao(nome_arquivo: str) -> str:
     if nome_arquivo in CATALOGO:
@@ -74,6 +77,7 @@ def pergunta_catalogo(pergunta: str) -> bool:
     )
 
 def resposta_catalogo(arquivos: list[Path]) -> str:
+    arquivos = [p for p in arquivos if not documento_geral(p)]
     linhas = [f"{i}. {nome_exibicao(p.name)}" for i, p in enumerate(arquivos, 1)]
     return (
         f"Há **{len(arquivos)} bulas em PDF** na base do FalaBula:\n\n"
@@ -89,6 +93,8 @@ def identificar_documentos(pergunta: str, arquivos: list[Path]) -> list[Path]:
     frase = frase.replace(" monjaro ", " mounjaro ")
     correspondencias = {}
     for p in arquivos:
+        if documento_geral(p):
+            continue
         if p.name in CATALOGO:
             apelidos = CATALOGO[p.name][1]
         else:
@@ -184,17 +190,46 @@ def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
         return resposta_catalogo(arquivos), []
 
     encontrados = identificar_documentos(pergunta, arquivos)
-    if not encontrados:
-        return (
-            "Não identifiquei um medicamento específico da base nesta pergunta. "
-            "Informe o nome comercial ou princípio ativo, ou pergunte "
-            "'Quais medicamentos estão cadastrados?'.", []
-        )
+    consulta_geral = not encontrados
+    if consulta_geral:
+        p = normalizar(pergunta)
+        # Não buscar doses ou recomendações de medicamentos sem identificar o produto.
+        if foco(pergunta) in {"posologia", "contraindicacao", "reacoes"} or any(
+            t in p for t in ("qual remedio", "qual medicamento", "devo tomar", "posso tomar", "me receite")
+        ):
+            return "Informe o nome do medicamento para consultar sua bula. Não posso prescrever tratamentos.", []
+        # Prioriza fontes gerais; admite bulas como fontes limitadas de informação.
+        termos = {t for t in p.split() if len(t) > 3 and t not in PALAVRAS_COMUNS
+                  and t not in {"tipos", "tipo", "quais", "quaisquer", "diferenca", "explique", "principais"}}
+        if not termos:
+            return "Especifique a doença ou assunto que deseja consultar.", []
+        candidatos = []
+        for arquivo in arquivos:
+            for numero, texto in base.get(arquivo.name, []):
+                palavras = set(normalizar(texto).split())
+                comuns = termos & palavras
+                if comuns:
+                    nota = len(comuns) * 10 + (5 if documento_geral(arquivo) else 0)
+                    candidatos.append((nota, arquivo.name, numero, texto))
+        candidatos.sort(key=lambda x: (-x[0], x[1], x[2]))
+        # Diversifica os documentos, sem deixar uma única bula dominar a consulta.
+        trechos = []
+        contagem = Counter()
+        for _, nome, pagina, texto in candidatos:
+            if contagem[nome] >= 2:
+                continue
+            trechos.append((nome, pagina, texto[:4200]))
+            contagem[nome] += 1
+            if len(trechos) >= 6:
+                break
+        if not trechos:
+            return "Não encontrei informações documentais sobre esse assunto na base cadastrada.", []
     if len(encontrados) > 1:
         nomes = ", ".join(nome_exibicao(p.name) for p in encontrados)
         return f"Encontrei mais de uma bula correspondente: **{nomes}**. Especifique a apresentação.", []
 
-    trechos = recuperar_paginas(pergunta, encontrados, base)
+    if not consulta_geral:
+        trechos = recuperar_paginas(pergunta, encontrados, base)
     if not trechos:
         return "Não foi possível extrair informações da bula selecionada.", []
 
@@ -215,17 +250,21 @@ def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
     mensagens = [
         {"role": "system", "content": (
             "Você é um assistente acadêmico de consulta a bulas. "
-            "Responda em português claro somente com o texto da bula apresentada. "
-            "Identifique o medicamento pelo nome da bula. "
+            ("Responda em português claro somente com os documentos apresentados. "
+             "Em perguntas gerais, explique apenas o que os trechos sustentam, distinguindo bulas de diretrizes; "
+             "não trate indicações de medicamentos como classificação completa de doenças. "
+             "Se a base não permitir uma resposta completa, declare a limitação. "
+             "Não recomende medicamentos nem misture orientações de produtos distintos. "
+             if consulta_geral else "Responda em português claro somente com o texto da bula apresentada. Identifique o medicamento pelo nome da bula. ") + 
             "Nunca invente dose, indicação, apresentação, tempo de ação, "
             "interação, contraindicação, fonte ou disponibilidade gratuita. "
             "Se o trecho não contém a resposta, declare que não foi possível "
             "confirmá-la nos trechos recuperados. "
             "Não faça diagnóstico, prescrição nem recomendação individual. "
             "Resuma somente informações pertinentes à pergunta. "
-            "Não misture outros medicamentos. Cite o número da página quando útil."
+            "Não atribua informações de um medicamento a outro. Cite documento e página para cada informação relevante."
         )},
-        {"role": "user", "content": f"PERGUNTA: {pergunta}\n\nBULA SELECIONADA:\n{contexto}"}
+        {"role": "user", "content": f"PERGUNTA: {pergunta}\n\nDOCUMENTOS RECUPERADOS:\n{contexto}"}
     ]
     resultado = Groq(api_key=api_key, timeout=30.0).chat.completions.create(
         model="openai/gpt-oss-120b",
