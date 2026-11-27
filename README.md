@@ -6,6 +6,10 @@ Projeto acadêmico de chatbot que responde a perguntas em português sobre **med
 
 > **Atenção:** conteúdo informativo, não é diagnóstico, prescrição nem orientação de tratamento individual. Não inicie, altere ou interrompa medicamentos com base nas respostas. Consulte profissional habilitado.
 
+## Versão 2.4 — prioridade documental (27/11/2026)
+
+O guia de diabetes foi incorporado a `documentos/doencas/`, preservando o original na raiz. Consultas gerais priorizam exclusivamente documentos gerais com correspondência textual quando encontrados; na ausência deles, recorrem às bulas com ressalva de cobertura. O conteúdo e a procedência do guia ainda precisam de validação pela equipe. Testar a pergunta “Quais tipos de diabetes existem?” e conferir o guia em Fontes consultadas. A implantação online e os testes de regressão devem ser confirmados separadamente.
+
 ## Versão 2.3 — fontes e PDFs (27/11/2026)
 
 A seção **Fontes consultadas** agrupa páginas recuperadas por documento, mostra o nome amigável e permite abrir o PDF completo cadastrado no GitHub. Os links são gerados pelo módulo `fontes.py` a partir dos caminhos relativos dos arquivos. A seção fica recolhida por padrão. A versão no GitHub pode não corresponder à revisão mais recente do fabricante; confira a origem e a validade da bula. O link pressupõe que o arquivo esteja publicado na branch `main` do repositório oficial.
@@ -141,7 +145,7 @@ Este é um protótipo acadêmico. As respostas são limitadas aos documentos pre
 
 ## Diagnóstico e testes de regressão
 
-A interface informa a versão 2.3, de 27/11/2026, e a quantidade de PDFs no menu lateral. O comportamento esperado:
+A interface informa a versão 2.4, de 27/11/2026, e a quantidade de PDFs no menu lateral. O comportamento esperado:
 
 - **"Quais medicamentos estão cadastrados?"**: lista apenas os PDFs classificados como bulas, sem gerar a relação por IA.
 - **"Para que serve o Mounjaro?"**: seleciona exclusivamente o PDF do Mounjaro; não utiliza excertos de insulina ou metformina.
