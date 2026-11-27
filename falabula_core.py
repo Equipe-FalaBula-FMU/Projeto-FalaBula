@@ -304,7 +304,7 @@ def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
         )},
         {"role": "user", "content": f"PERGUNTA: {pergunta}\n\nDOCUMENTOS RECUPERADOS:\n{contexto}"}
     ]
-    resultado = Groq(api_key=api_key, timeout=30.0).chat.completions.create(
+    resultado = Groq(api_key=api_key, timeout=30.0, max_retries=0).chat.completions.create(
         model="openai/gpt-oss-120b",
         messages=mensagens,
         temperature=0,
