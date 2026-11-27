@@ -44,9 +44,22 @@ def iniciar_rag():
 
     #3.1. CARREGAMENTO DO DOCUMENTO PDF
 
-    arquivos = [
+   arquivos = [
         "Base_Unica_Diabetes_Posologia_Mapeada.pdf",
         "GuiaDiabetes.pdf",
+        "bula_dapagliflozina.pdf",
+        "bula_empagliflozina.pdf",
+        "bula_glibenclamida.pdf",
+        "bula_gliclazida.pdf",
+        "bula_glifage.pdf",
+        "bula_glifagexr.pdf",
+        "bula_glimepirida.pdf",
+        "bula_InsulinaHumana_NovolinN.pdf",
+        "bula_InsulinaHumanaRegular.pdf",
+        "bula_Januvia.pdf",
+        "bula_LANTUS_insulina_glargina.pdf",
+        "bula_Mounjaro.pdf",
+        "Guia Completo dos Tipos e Variações do Diabetes Mellitus.pdf"
     ]
 
     # Lê os PDFs e transforma o conteúdo em objetos Document
