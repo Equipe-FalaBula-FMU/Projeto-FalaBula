@@ -116,3 +116,66 @@ flowchart TD
 - [MDN — HTML e CSS](https://developer.mozilla.org/pt-BR/)
 
 A descrição do projeto foi fundamentada no código do próprio repositório. As referências externas servem para aprofundamento dos conceitos.
+
+## 10. Estudo aprofundado: integração das tecnologias
+
+### Do navegador ao servidor
+O navegador apresenta a interface gerada pelo Streamlit. O código Python roda no servidor, não no navegador. O Streamlit comunica eventos da interface ao processo Python e atualiza os componentes; não foi necessário desenvolver um frontend React nem uma API REST própria. HTML e CSS personalizam a apresentação, mas não executam a lógica do RAG. O estado de sessão preserva mensagens entre reexecuções; não constitui memória clínica persistente e o histórico não é enviado automaticamente ao modelo na implementação atual.
+
+### Do arquivo à informação pesquisável
+pathlib percorre a pasta documentos/ e subpastas. pypdf extrai texto por página. O cache do Streamlit armazena a estrutura de páginas extraídas; a assinatura por caminho, tamanho e data de modificação permite reconhecer alterações. re e unicodedata normalizam maiúsculas, acentos e pontuação. O catálogo associa nomes de medicamentos a aliases conhecidos; para novas bulas, o nome do arquivo é a referência inicial. A recuperação lexical pontua a presença de termos e âncoras de seções, como contraindicações. Para consultas gerais, documentos de doenças e protocolos recebem prioridade. Não há embeddings, banco vetorial nem treinamento de modelo. A escolha simplifica a execução e reduz uso de memória, mas limita a capacidade de reconhecer sinônimos e relações semânticas.
+
+### Da recuperação à geração
+O backend escolhe até quatro páginas de uma bula específica ou até seis páginas em consulta geral, limitando cada trecho a 4.200 caracteres. O prompt contém pergunta, trechos, documento e página, além de instruções para não inventar informações e não prescrever. O SDK Groq envia a solicitação ao serviço remoto por HTTPS, usando a chave privada. O modelo openai/gpt-oss-120b gera texto; temperatura zero reduz variabilidade, sem garantir determinismo ou precisão. O Streamlit mostra a resposta e as páginas recuperadas. Se não houver evidência, o sistema deve explicitar a limitação. Catálogos são produzidos pelo código sem depender do modelo. A presença de um trecho não prova que ele sustenta toda a resposta.
+
+### Da manutenção à publicação
+Git registra versões; GitHub armazena código e PDFs; Streamlit Community Cloud instala dependências declaradas em requirements.txt e executa o arquivo de entrada configurado. O Drive é apenas uma área de coleta. Alterar o Drive não altera o repositório. A equipe deve verificar origem, versão e legibilidade dos documentos, enviar os PDFs ao GitHub e conferir a implantação. A chave GROQ_API_KEY fica no .env local ou nos Secrets do servidor, nunca em código público. O projeto não possui login real, banco de usuários ou garantia de confidencialidade clínica. Não inserir dados pessoais de saúde.
+
+## 11. Banco de perguntas para a banca
+
+| Pergunta | Resposta a estudar |
+|---|---|
+| Por que Python? | Integra interface, tratamento de documentos e SDK de IA em uma linguagem acessível à equipe. |
+| Por que Streamlit em vez de React? | Para reduzir complexidade de desenvolvimento e manter a interface no ecossistema Python; React permitiria maior controle visual, com custo de integração adicional. |
+| O frontend roda no navegador? | A interface é exibida no navegador, mas o código Python roda no servidor Streamlit. |
+| Front e back são serviços separados? | Não. São camadas lógicas do mesmo processo, ligadas por chamadas de funções. |
+| Qual a função de app.py? | É um ponto de entrada que importa frontend.py; não precisa duplicar a lógica. |
+| HTML e CSS fazem a mesma coisa? | HTML estrutura elementos; CSS controla a aparência. |
+| O que é uma API? | Uma interface de comunicação entre sistemas; aqui o SDK Groq faz solicitações ao serviço remoto. |
+| Groq é o modelo? | Não. Groq é o provedor de inferência; GPT-OSS-120B é o modelo configurado. |
+| O que significa LLM? | Large Language Model, um modelo de linguagem de grande porte. |
+| O que é inferência? | Execução de um modelo já treinado para produzir uma saída com base na entrada. |
+| O que é RAG? | Recuperar informações externas e fornecê-las como contexto ao modelo antes de gerar uma resposta. |
+| Por que RAG e não fine-tuning? | Para ampliar e atualizar a base documental sem modificar os pesos do modelo. |
+| Por que pypdf? | Extrai texto por página diretamente de PDFs textuais, permitindo recuperação e referências. |
+| Um PDF escaneado funciona? | Não necessariamente: sem camada de texto, exige preparação ou OCR externo. |
+| Qual o algoritmo de busca? | Correspondência lexical, aliases e pontuação por termos e âncoras; não é busca vetorial. |
+| O que são embeddings? | Vetores numéricos que representam conteúdo; não são usados nesta versão. |
+| Existe banco de dados? | Não há SGBD dedicado; PDFs são a base persistente e páginas extraídas ficam em memória/cache. |
+| Por que cache? | Evita repetir a extração em cada pergunta, economizando tempo e recursos. |
+| Como o cache percebe mudanças? | A assinatura dos arquivos muda quando caminho, tamanho ou data de modificação mudam. |
+| Como o chatbot encontra uma nova bula? | Pelo nome do arquivo; aliases adicionais podem exigir alteração do catálogo. |
+| Como responde a perguntas gerais? | Busca termos relevantes nos documentos, prioriza fontes gerais e informa limites de cobertura. |
+| Pode responder sobre qualquer doença? | Não. Depende de conteúdo disponível e recuperado na base. |
+| Qual o papel do prompt? | Informar tarefa, contexto, referências e restrições ao modelo. |
+| Temperatura zero impede alucinações? | Não. Reduz variabilidade, mas não garante factualidade. |
+| Como validar uma resposta? | Comparar afirmações com as páginas originais, verificar relevância, completude e ausência de invenções. |
+| O que acontece se a Groq falhar? | Consultas dependentes do modelo podem falhar; catálogo local não precisa da API. |
+| Como proteger a chave? | Variáveis de ambiente e Secrets, sem publicar a credencial. |
+| O login é seguro? | É demonstrativo, sem autenticação real; não usar para dados clínicos pessoais. |
+| O histórico é memória do modelo? | Não. O estado de sessão exibe mensagens; o núcleo recebe a pergunta atual e os trechos, não todo o histórico. |
+| Por que GitHub e Streamlit Cloud? | Versionamento e colaboração, associados à hospedagem do protótipo. |
+| O Drive sincroniza automaticamente? | Não, os PDFs precisam entrar no repositório e na implantação. |
+| Como comprovar funcionamento? | Executar regressão, confirmar a versão publicada e homologar consultas com fontes conhecidas. |
+| Como medir a qualidade do RAG? | Usar perguntas com respostas de referência e medir recuperação relevante, fidelidade, completude e recusas adequadas. |
+| O que melhoraria no futuro? | Busca híbrida, metadados, controle de versões documentais, testes de segurança e autenticação, conforme necessidade. |
+| O sistema substitui médico ou farmacêutico? | Não; finalidade acadêmica e informativa, sem diagnóstico ou prescrição. |
+
+## 12. Plano de preparação do grupo
+
+1. Todos: explicar o fluxo completo sem ler o código; distinguir modelo, API, framework e RAG.
+2. Responsável pelo frontend: localizar app.py, frontend.py, style.css e explicar sessão e reexecução.
+3. Responsável pelo backend: localizar listar_arquivos, carregar_paginas, identificar_documentos, recuperar_paginas e responder_pergunta; explicar a consulta geral e específica.
+4. Responsável pela IA: explicar prompt, inferência, limites e por que RAG não é treinamento.
+5. Responsável pela infraestrutura: mostrar GitHub, requirements.txt, Secrets sem exibir chaves e processo de implantação.
+6. Todos: ensaiar demonstração com catálogo, medicamento conhecido, pergunta geral, tema ausente e pedido de prescrição. Conferir as fontes originais e registrar falhas. Não apresentar métricas não medidas ou testes não executados como resultados.
