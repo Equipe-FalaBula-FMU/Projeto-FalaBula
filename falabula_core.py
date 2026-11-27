@@ -202,6 +202,17 @@ def recuperar_paginas(pergunta: str, documentos: list[Path], base: dict,
         saida.append((nome, pagina, texto[:4200]))
     return saida
 
+def limpar_referencias_tecnicas(resposta: str) -> str:
+    """Remove apenas marcadores técnicos de página/documento gerados pelo modelo.
+
+    Mantém siglas médicas, números, unidades e parágrafos do texto.
+    As fontes são retornadas separadamente pelo mecanismo de recuperação.
+    """
+    padrao = r"[【\[]\s*(?:(?:DOCUMENTO|FONTE)\s*:\s*[^【】\[\]\n]*?\|\s*)?P[ÁA]GINAS?\s*:\s*\d+(?:\s*(?:[,;–-]|e)\s*\d+)*\s*[】\]]"
+    resposta = re.sub(r"[ \t]*" + padrao, "", resposta, flags=re.IGNORECASE)
+    return resposta.strip()
+
+
 def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
                       api_key: str) -> tuple[str, list[str]]:
     if not arquivos:
@@ -289,7 +300,7 @@ def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
             "confirmá-la nos trechos recuperados. "
             "Não faça diagnóstico, prescrição nem recomendação individual. "
             "Resuma somente informações pertinentes à pergunta. "
-            "Não atribua informações de um medicamento a outro. Cite documento e página para cada informação relevante."
+            "Não atribua informações de um medicamento a outro. Escreva a resposta em linguagem natural, sem marcadores técnicos de documento ou página, sem referências entre colchetes e sem listas de fontes no corpo do texto. A interface apresenta separadamente os documentos e páginas recuperados. Preserve siglas médicas relevantes e explique seus significados quando necessário."
         )},
         {"role": "user", "content": f"PERGUNTA: {pergunta}\n\nDOCUMENTOS RECUPERADOS:\n{contexto}"}
     ]
@@ -299,7 +310,7 @@ def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
         temperature=0,
         max_completion_tokens=900,
     )
-    resposta = (resultado.choices[0].message.content or "").strip()
+    resposta = limpar_referencias_tecnicas(resultado.choices[0].message.content or "")
     if not resposta:
         raise RuntimeError("O serviço de geração retornou uma resposta vazia.")
     return resposta, fontes
