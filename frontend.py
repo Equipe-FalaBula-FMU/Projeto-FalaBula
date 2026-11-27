@@ -148,7 +148,7 @@ else:
         st.divider()
         st.caption(f"Bulas cadastradas: {sum(not documento_geral(p) for p in arquivos)}")
         st.caption(f"Documentos gerais: {sum(documento_geral(p) for p in arquivos)}")
-        st.caption("Versão 2.4 — prioridade documental — 27/11/2026")
+        st.caption("Versão 2.5 — respostas e fontes — 27/11/2026")
         with st.expander("Documentos disponíveis"):
             for arquivo in arquivos:
                 st.caption(chave_documento(arquivo))
@@ -225,7 +225,7 @@ else:
     )
 
 st.markdown(
-    '<div class="footer">FalaBula · versão 2.4 · Projeto acadêmico de inteligência artificial'
+    '<div class="footer">FalaBula · versão 2.5 · Projeto acadêmico de inteligência artificial'
     ' · Informação responsável</div>',
     unsafe_allow_html=True,
 )
