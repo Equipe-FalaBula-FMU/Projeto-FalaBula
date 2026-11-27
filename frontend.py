@@ -37,7 +37,7 @@ if "nome_visitante" not in st.session_state:
 
 from falabula_core import (
     listar_arquivos, assinatura, carregar_paginas, responder_pergunta,
-    pergunta_catalogo, resposta_catalogo
+    pergunta_catalogo, resposta_catalogo, identificar_documentos, documento_geral, chave_documento
 )
 
 
@@ -68,7 +68,7 @@ def chave_groq():
 
 def responder(pergunta, identificacao):
     arquivos = listar_bulas()
-    if pergunta_catalogo(pergunta):
+    if pergunta_catalogo(pergunta) and not identificar_documentos(pergunta, arquivos):
         return resposta_catalogo(arquivos), []
     indice = indexar_documentos(identificacao)
     return responder_pergunta(pergunta, arquivos, indice, chave_groq())
@@ -77,7 +77,7 @@ def responder(pergunta, identificacao):
 st.markdown(
     '<div class="top-brand"><div class="brand-mark">F</div><div>'
     '<div class="brand-name">FalaBula<span>.</span></div>'
-    '<div class="brand-subtitle">Informações sobre medicamentos, baseadas em bulas</div>'
+    '<div class="brand-subtitle">Informações sobre medicamentos e saúde, baseadas em documentos</div>'
     '</div><span class="top-pill">PROJETO ACADÊMICO</span></div>',
     unsafe_allow_html=True,
 )
@@ -115,7 +115,7 @@ else:
         '<div class="hero"><div class="eyebrow">SEU ASSISTENTE DE BULAS</div>'
         '<h1>Como podemos <em>ajudar você?</em></h1>'
         '<p>Consulte indicações, precauções, contraindicações e reações adversas '
-        'de medicamentos presentes nas bulas cadastradas.</p></div>',
+        'de medicamentos e temas de saúde presentes na base documental.</p></div>',
         unsafe_allow_html=True,
     )
     arquivos = listar_bulas()
@@ -131,11 +131,12 @@ else:
             st.session_state.mensagens_falabula = []
             st.rerun()
         st.divider()
-        st.caption(f"Bulas cadastradas: {len(arquivos)}")
-        st.caption("Versão 2.1 — correção Monjaro/Mounjaro — 26/11/2026")
+        st.caption(f"Bulas cadastradas: {sum(not documento_geral(p) for p in arquivos)}")
+        st.caption(f"Documentos gerais: {sum(documento_geral(p) for p in arquivos)}")
+        st.caption("Versão 2.2 — consultas gerais — 26/11/2026")
         with st.expander("Documentos disponíveis"):
             for arquivo in arquivos:
-                st.caption(arquivo.name)
+                st.caption(chave_documento(arquivo))
         st.caption(
             "Projeto acadêmico. Informações não substituem orientação "
             "médica ou farmacêutica."
@@ -157,6 +158,7 @@ else:
             "Para que serve o Mounjaro, segundo a bula?",
             "Quais contraindicações constam na bula do Glifage?",
             "Quais reações adversas constam na bula do Januvia?",
+            "Quais os tipos de diabetes?",
 
         ]
         grade = st.columns(2)
@@ -180,7 +182,7 @@ else:
                         st.caption(fonte)
 
     pergunta_digitada = st.chat_input(
-        "Pergunte sobre os medicamentos disponíveis nas bulas..."
+        "Pergunte sobre medicamentos ou assuntos presentes nos documentos..."
     )
     pergunta = pergunta_digitada or selecionada
     if pergunta:
@@ -191,10 +193,10 @@ else:
             st.markdown(pergunta)
         with st.chat_message("assistant", avatar="💬"):
             try:
-                with st.spinner("Consultando bulas cadastradas..."):
+                with st.spinner("Consultando documentos cadastrados..."):
                     resposta, fontes = responder(pergunta, assinatura)
             except Exception as erro:
-                st.error(f"Não foi possível consultar as bulas: {erro}")
+                st.error(f"Não foi possível consultar os documentos: {erro}")
             else:
                 st.markdown(resposta)
                 if fontes:
@@ -214,7 +216,7 @@ else:
     )
 
 st.markdown(
-    '<div class="footer">FalaBula · versão 2.1 · Projeto acadêmico de inteligência artificial'
+    '<div class="footer">FalaBula · versão 2.2 · Projeto acadêmico de inteligência artificial'
     ' · Informação responsável</div>',
     unsafe_allow_html=True,
 )
