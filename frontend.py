@@ -9,6 +9,7 @@ import os
 
 import streamlit as st
 from dotenv import load_dotenv
+from fontes import agrupar_fontes
 
 BASE_DIR = Path(__file__).resolve().parent
 DOCS_DIR = BASE_DIR / "documentos"
@@ -64,6 +65,20 @@ def chave_groq():
         return st.secrets.get("GROQ_API_KEY", "")
     except (FileNotFoundError, KeyError):
         return ""
+
+
+def mostrar_fontes(fontes):
+    grupos = agrupar_fontes(fontes)
+    if not grupos:
+        return
+    with st.expander("Fontes consultadas", expanded=False):
+        for grupo in grupos:
+            st.text(f"{grupo['tipo']} — {grupo['titulo']}")
+            paginas = ", ".join(str(p) for p in grupo["paginas"])
+            st.caption(f"Páginas recuperadas: {paginas}")
+            rotulo = "Ler bula completa (PDF)" if grupo["tipo"] == "Bula" else "Ler documento completo (PDF)"
+            st.link_button(rotulo, grupo["url"])
+        st.caption("Estas páginas foram recuperadas para a consulta. Confira o PDF completo para confirmar as informações. O link abre a versão cadastrada no GitHub, não necessariamente a revisão mais recente do fabricante.")
 
 
 def responder(pergunta, identificacao):
@@ -133,7 +148,7 @@ else:
         st.divider()
         st.caption(f"Bulas cadastradas: {sum(not documento_geral(p) for p in arquivos)}")
         st.caption(f"Documentos gerais: {sum(documento_geral(p) for p in arquivos)}")
-        st.caption("Versão 2.2 — consultas gerais — 26/11/2026")
+        st.caption("Versão 2.3 — fontes e PDFs — 27/11/2026")
         with st.expander("Documentos disponíveis"):
             for arquivo in arquivos:
                 st.caption(chave_documento(arquivo))
@@ -176,10 +191,7 @@ else:
             avatar="👤" if mensagem["role"] == "user" else "💬",
         ):
             st.markdown(mensagem["content"])
-            if mensagem.get("fontes"):
-                with st.expander("Trechos de origem recuperados"):
-                    for fonte in mensagem["fontes"]:
-                        st.caption(fonte)
+            mostrar_fontes(mensagem.get("fontes", []))
 
     pergunta_digitada = st.chat_input(
         "Pergunte sobre medicamentos ou assuntos presentes nos documentos..."
@@ -199,10 +211,7 @@ else:
                 st.error(f"Não foi possível consultar os documentos: {erro}")
             else:
                 st.markdown(resposta)
-                if fontes:
-                    with st.expander("Trechos de origem recuperados"):
-                        for fonte in fontes:
-                            st.caption(fonte)
+                mostrar_fontes(fontes)
                 st.session_state.mensagens_falabula.append(
                     {"role": "assistant", "content": resposta, "fontes": fontes}
                 )
@@ -216,7 +225,7 @@ else:
     )
 
 st.markdown(
-    '<div class="footer">FalaBula · versão 2.2 · Projeto acadêmico de inteligência artificial'
+    '<div class="footer">FalaBula · versão 2.3 · Projeto acadêmico de inteligência artificial'
     ' · Informação responsável</div>',
     unsafe_allow_html=True,
 )
