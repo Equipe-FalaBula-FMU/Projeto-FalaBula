@@ -9,6 +9,7 @@ import os
 
 import streamlit as st
 from dotenv import load_dotenv
+from groq import APITimeoutError, APIConnectionError, RateLimitError, APIStatusError
 from fontes import agrupar_fontes
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -53,7 +54,7 @@ def assinatura_documentos(arquivos):
 @st.cache_resource(show_spinner=False, max_entries=2)
 def indexar_documentos(identificacao):
     """Carrega os PDFs uma vez; mudanças de arquivo invalidam o cache."""
-    return carregar_paginas(listar_bulas())
+    return carregar_paginas([Path(item[0]) for item in identificacao])
 
 
 def chave_groq():
@@ -96,8 +97,14 @@ def responder(pergunta, identificacao):
     arquivos = listar_bulas()
     if pergunta_catalogo(pergunta) and not identificar_documentos(pergunta, arquivos):
         return resposta_catalogo(arquivos), []
-    indice = indexar_documentos(identificacao)
-    return responder_pergunta(pergunta, arquivos, indice, chave_groq())
+    encontrados = identificar_documentos(pergunta, arquivos)
+    # Consultas específicas não precisam extrair todas as bulas.
+    selecionados = encontrados or arquivos
+    assinatura_selecionada = assinatura_documentos(selecionados)
+    with st.spinner("Lendo documentos selecionados..."):
+        indice = indexar_documentos(assinatura_selecionada)
+    with st.spinner("Gerando resposta com a IA..."):
+        return responder_pergunta(pergunta, arquivos, indice, chave_groq())
 
 
 st.markdown(
@@ -160,7 +167,7 @@ else:
         st.divider()
         st.caption(f"Bulas cadastradas: {sum(not documento_geral(p) for p in arquivos)}")
         st.caption(f"Documentos gerais: {sum(documento_geral(p) for p in arquivos)}")
-        st.caption("Versão 2.5.1 — estável — 27/11/2026")
+        st.caption("Versão 2.5.2 — correção de carregamento — 27/11/2026")
         with st.expander("Documentos disponíveis"):
             for arquivo in arquivos:
                 st.caption(chave_documento(arquivo))
@@ -234,10 +241,17 @@ else:
                 st.markdown(pergunta)
             with st.chat_message("assistant", avatar="💬"):
                 try:
-                    with st.spinner("Consultando documentos cadastrados..."):
-                        resposta, fontes = responder(pergunta, assinatura)
-                except Exception as erro:
-                    st.error(f"Não foi possível consultar os documentos: {erro}")
+                    resposta, fontes = responder(pergunta, assinatura)
+                except APITimeoutError:
+                    st.error("O serviço de IA não respondeu no prazo. Tente novamente.")
+                except RateLimitError:
+                    st.error("O serviço de IA atingiu o limite de consultas. Tente novamente mais tarde.")
+                except APIConnectionError:
+                    st.error("Não foi possível conectar ao serviço de IA. Tente novamente.")
+                except APIStatusError:
+                    st.error("O serviço de IA retornou um erro. Consulte os logs do Streamlit.")
+                except Exception:
+                    st.error("Não foi possível consultar os documentos. Consulte os logs do Streamlit.")
                 else:
                     st.markdown(resposta)
                     mostrar_fontes(fontes)
