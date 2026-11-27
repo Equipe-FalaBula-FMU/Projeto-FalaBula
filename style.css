@@ -79,3 +79,13 @@ h1{font-family:Manrope,sans-serif;font-size:clamp(30px,4.1vw,51px);font-weight:8
   [data-testid="stChatMessage"] { background-color: #ffffff !important; }
   [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) { background-color: #eaf5ee !important; }
 }
+
+/* Espaçamento entre aviso, campo de perguntas e créditos. */
+.medical-note { margin-top: 20px; margin-bottom: 16px; }
+[data-testid="stChatInput"] { margin-top: 8px !important; }
+.footer { margin-top: 12px; padding-top: 10px; }
+@media (max-width: 768px) {
+  .medical-note { margin-bottom: 12px; padding: 12px 14px; }
+  [data-testid="stChatInput"] { margin-top: 8px !important; }
+  .footer { margin-top: 10px; padding-top: 8px; }
+}
