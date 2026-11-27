@@ -6,6 +6,19 @@ Projeto acadêmico de chatbot que responde a perguntas em português sobre **med
 
 > **Atenção:** conteúdo informativo, não é diagnóstico, prescrição nem orientação de tratamento individual. Não inicie, altere ou interrompa medicamentos com base nas respostas. Consulte profissional habilitado.
 
+## Versão 2.2 — consultas gerais (26/11/2026)
+
+A aplicação recupera documentos também para perguntas sobre doenças e temas de saúde sem exigir o nome de um medicamento. Prioriza fontes gerais cadastradas e, na ausência delas, pode consultar bulas, explicitando quando a cobertura é insuficiente. Perguntas específicas continuam restritas à bula identificada; pedidos de prescrição não são atendidos.
+
+### Organização da base
+
+- `documentos/` ou `documentos/bulas/`: bulas de medicamentos.
+- `documentos/doencas/`: documentos oficiais sobre doenças.
+- `documentos/protocolos_clinicos/`: protocolos e diretrizes.
+- `documentos/orientacoes_oficiais/`: materiais oficiais de orientação.
+
+As subpastas são reconhecidas automaticamente quando contêm PDFs. Não é necessário mover as bulas existentes. Para uma classificação completa dos tipos de diabetes, cadastre uma fonte oficial que descreva essa classificação; a presença de bulas não garante cobertura suficiente. Consulte o [Ministério da Saúde](https://www.gov.br/saude/pt-br) para obter documentos. A inclusão de PDFs não requer novo treinamento.
+
 ## Links úteis
 
 - [Aplicação online — Streamlit](https://projeto-falabula-dashshp2g9tj3fr9jop2yv.streamlit.app/)
@@ -15,7 +28,7 @@ Projeto acadêmico de chatbot que responde a perguntas em português sobre **med
 
 ## Situação da base documental
 
-- A pasta `documentos/` contém **12 PDFs recebidos pela equipe** na [pasta compartilhada no Google Drive](https://drive.google.com/drive/folders/1pw05qc4SeUuLskEq6FS0q0vY1_n5jcBM).
+- A base inicial recebeu **12 PDFs da equipe** na [pasta compartilhada no Google Drive](https://drive.google.com/drive/folders/1pw05qc4SeUuLskEq6FS0q0vY1_n5jcBM).
 - Nesta etapa, os documentos são predominantemente relacionados a **diabetes e condições associadas**. A arquitetura é genérica, mas **a cobertura de outras enfermidades dependerá do cadastro de novas bulas**.
 - A origem regulatória, atualização, laboratório e validade de cada PDF devem ser conferidos pela equipe antes de considerá-lo uma fonte oficial atualizada. A existência do arquivo no Drive não constitui essa validação.
 - Os arquivos antigos `Base_Unica_Diabetes_Posologia_Mapeada.pdf` e `GuiaDiabetes.pdf` permanecem na raiz como legado; **a nova interface `frontend.py` consulta somente a pasta `documentos/`**.
@@ -78,6 +91,9 @@ O arquivo `app.py` é agora um **ponto de entrada compatível com Streamlit Clou
 
 ## Perguntas de validação inicial
 
+- Quais os tipos de diabetes? (Recupera documentos relevantes; informa limitações se não houver classificação completa.)
+- O que é uma doença ausente da base? (Informa falta de evidências.)
+
 - Para que serve o Mounjaro, segundo a bula?
 - Quais contraindicações constam na bula do Glifage?
 - Que cuidados a bula do Lantus informa?
@@ -104,18 +120,20 @@ Projeto-FalaBula/
 
 ## Histórico e preservação
 
+Backup anterior à versão 2.2: [backup/antes-consulta-geral-2026-11-26](https://github.com/Equipe-FalaBula-FMU/Projeto-FalaBula/tree/backup/antes-consulta-geral-2026-11-26).
+
 A versão anterior do repositório oficial está preservada na branch [`backup/antes-correcao-equipe-2026-11-26`](https://github.com/Equipe-FalaBula-FMU/Projeto-FalaBula/tree/backup/antes-correcao-equipe-2026-11-26).
 
 ## Responsabilidade
 
-Este é um protótipo acadêmico. As respostas são limitadas às bulas presentes na pasta `documentos/`. Informações sobre disponibilidade no SUS, Farmácia Popular, preços, estoque e elegibilidade devem ser verificadas em fontes governamentais atuais, não deduzidas de bulas.
+Este é um protótipo acadêmico. As respostas são limitadas aos documentos presentes na pasta `documentos/`. Informações sobre disponibilidade no SUS, Farmácia Popular, preços, estoque e elegibilidade devem ser verificadas em fontes governamentais atuais, não deduzidas de bulas.
 
 
 ## Diagnóstico e testes de regressão
 
-A interface informa a versão 2.1, de 26/11/2026, e a quantidade de PDFs no menu lateral. O comportamento esperado:
+A interface informa a versão 2.2, de 26/11/2026, e a quantidade de PDFs no menu lateral. O comportamento esperado:
 
-- **"Quais medicamentos estão cadastrados?"**: lista exatamente todos os PDFs da pasta, sem gerar a relação por IA.
+- **"Quais medicamentos estão cadastrados?"**: lista apenas os PDFs classificados como bulas, sem gerar a relação por IA.
 - **"Para que serve o Mounjaro?"**: seleciona exclusivamente o PDF do Mounjaro; não utiliza excertos de insulina ou metformina.
 - **"Quais são os efeitos adversos da dapagliflozina?"**: consulta somente o PDF da dapagliflozina.
 - **"Quais medicamentos há para pressão alta?"**: caso não haja bula e medicamento específico, solicita identificação ou informa limitação; não inventa lista.
