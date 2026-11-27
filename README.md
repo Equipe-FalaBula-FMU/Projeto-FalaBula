@@ -1,151 +1,109 @@
-# 💊 Chatbot Farmacêutico para Diabetes (RAG)
+# FalaBula — Assistente de consulta a bulas (RAG)
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
-![Streamlit](https://img.shields.io/badge/Interface-Streamlit-FF4B4B)
-![LangChain](https://img.shields.io/badge/Framework-LangChain-1C3C3C)
-![ChromaDB](https://img.shields.io/badge/VectorDB-Chroma-orange)
-![Groq](https://img.shields.io/badge/LLM-Groq%20%7C%20gpt--oss--120b-00A67E)
+**[Acessar o FalaBula online](https://projeto-falabula-dashshp2g9tj3fr9jop2yv.streamlit.app/)**
 
-Assistente virtual inteligente desenvolvido com arquitetura **RAG (Retrieval-Augmented Generation)** para auxiliar pessoas com diabetes a reconhecer, consultar e compreender informações sobre seus medicamentos. O sistema responde a dúvidas em linguagem natural com base exclusivamente em uma base consolidada de bulas e registros farmacêuticos mapeados, evitando alucinações e garantindo fidelidade aos dados clínicos.
+Projeto acadêmico de chatbot que responde a perguntas em português sobre **medicamentos documentados nas bulas cadastradas**, utilizando recuperação de informações (RAG). A aplicação foi preparada para receber documentos de outras áreas terapêuticas, sem depender de uma doença específica.
 
-## 🎯 Objetivo do Projeto
+> **Atenção:** conteúdo informativo, não é diagnóstico, prescrição nem orientação de tratamento individual. Não inicie, altere ou interrompa medicamentos com base nas respostas. Consulte profissional habilitado.
 
-Facilitar o acesso à informação segura sobre medicamentos antidiabéticos (para Diabetes Tipo 1, Tipo 2 e condições correlatas), permitindo que pacientes e usuários consultem rapidamente:
-- Princípio ativo, classe terapêutica e categoria regulatória (Genérico, Similar, Novo, etc.).
-- Para que serve o medicamento e como ele funciona no organismo.
-- Posologia, forma farmacêutica, apresentações e uso indicado (adulto ou pediátrico).
-- Contraindicações, precauções e alertas de segurança.
+## Situação da base documental
 
-## 🏗️ Arquitetura e Fluxo do Sistema
+- A pasta `documentos/` contém **12 PDFs recebidos pela equipe** na [pasta compartilhada no Google Drive](https://drive.google.com/drive/folders/1pw05qc4SeUuLskEq6FS0q0vY1_n5jcBM).
+- Nesta etapa, os documentos são predominantemente relacionados a **diabetes e condições associadas**. A arquitetura é genérica, mas **a cobertura de outras enfermidades dependerá do cadastro de novas bulas**.
+- A origem regulatória, atualização, laboratório e validade de cada PDF devem ser conferidos pela equipe antes de considerá-lo uma fonte oficial atualizada. A existência do arquivo no Drive não constitui essa validação.
+- Os arquivos antigos `Base_Unica_Diabetes_Posologia_Mapeada.pdf` e `GuiaDiabetes.pdf` permanecem na raiz como legado; **a nova interface `frontend.py` consulta somente a pasta `documentos/`**.
 
-O projeto utiliza a arquitetura **RAG**, integrando busca semântica vetorial e geração de texto via LLM em 5 etapas principais:
+## Adicionar, substituir ou retirar bulas
 
-1. **Fonte de Dados e Carregamento (`PyPDFLoader`)**: Leitura do documento base contendo os registros e posologias dos medicamentos para diabetes.
-2. **Preparação dos Textos (`RecursiveCharacterTextSplitter` & `HuggingFaceEmbeddings`)**:
-   - **Chunking**: Divisão dos documentos em trechos menores (`chunk_size=1000` caracteres com sobreposição `chunk_overlap=200`) para preservar o contexto clínico.
-   - **Embeddings**: Conversão dos trechos de texto em vetores numéricos densos utilizando o modelo `sentence-transformers/all-MiniLM-L6-v2`.
-3. **Banco Vetorial e Recuperação (`Chroma`)**: Armazenamento local em memória dos vetores e configuração do *Retriever* para buscar os **5 trechos mais relevantes** (`k=5`) por similaridade semântica a cada pergunta do usuário.
-4. **Geração de Resposta (`ChatGroq`)**: Envio da pergunta do usuário junto ao contexto recuperado para o modelo **`openai/gpt-oss-120b`** via API da Groq, configurado com `temperature=0` para máxima precisão e determinismo.
-5. **Interface Web (`Streamlit`)**: Camada visual interativa com gerenciamento de estado da sessão (`st.session_state`) para histórico de mensagens e cache de recursos (`@st.cache_resource`) para evitar a recriação do banco vetorial a cada interação.
+1. Obter o PDF de fonte confiável, preferencialmente no [Bulário Eletrônico da Anvisa](https://consultas.anvisa.gov.br/#/bulario/), conferindo o medicamento, apresentação, fabricante e data da revisão.
+2. Colocar o PDF na pasta `documentos/`, mantendo um nome de arquivo identificável. O arquivo deve possuir texto selecionável: PDFs de imagem sem texto exigem preparação anterior.
+3. Para execução local, salvar o arquivo nessa pasta e atualizar a página; o cache de leitura é atualizado **na próxima consulta** quando for detectada inclusão, alteração ou remoção de arquivos.
+4. Para a versão online do Streamlit, enviar o PDF ao diretório `documentos/` na branch `main` do GitHub. O Streamlit deve implantar a atualização; depois da implantação, a próxima consulta atualiza a leitura da base. **Editar apenas o Google Drive não atualiza automaticamente o GitHub nem a aplicação.**
+5. Testar consultas sobre indicações, contraindicações, efeitos adversos e ausência de informação. Evitar documentos duplicados, versões conflitantes ou não verificadas.
 
-### Relação de Componentes da Arquitetura
+A atualização é uma **nova leitura e organização das páginas dos PDFs**, não o treinamento ou ajuste dos pesos do modelo de linguagem. A primeira consulta após mudanças pode ser mais lenta e usar recursos de memória; muitos PDFs grandes podem exceder os limites de hospedagem gratuita.
 
-| Etapa | Componente | Papel na Arquitetura |
-| :--- | :--- | :--- |
-| **1** | Configuração da API Groq | Integração com o serviço externo de IA e gerenciamento seguro de credenciais via `.env`. |
-| **2** | Interface Streamlit | Camada de apresentação responsável pela interação via chat com o usuário. |
-| **3** | Carregamento do Documento | Definição da entrada e leitura da base de conhecimento em PDF. |
-| **4** | Divisão em Chunks | Organização e fragmentação dos textos para otimizar a recuperação posterior. |
-| **5** | Modelo de Embeddings | Representação numérica e semântica dos textos farmacêuticos. |
-| **6** | Banco Vetorial Chroma | Armazenamento e pesquisa vetorial dos documentos processados. |
-| **7** | Retriever | Mecanismo de recuperação dos 5 trechos mais relevantes para a dúvida do usuário. |
-| **8** | LLM via Groq | Geração das respostas em linguagem natural estritamente baseadas no contexto recuperado. |
-| **9** | Preparação do RAG | Empacotamento e cache da pipeline de dados e IA (`@st.cache_resource`). |
-| **10** | Histórico e Fluxo de Chat | Gerenciamento do estado da conversa na sessão e exibição das respostas ao paciente. |
+## Como executar no computador
 
-## 📊 Estrutura da Base de Dados
+Requisitos: Python 3.10+ e acesso à Groq.
 
-A base de conhecimento (`Base_Unica_Diabetes_Posologia_Mapeada`) reúne **5.761 registros** mapeados na aba `Base Consolidada Posologia`, estruturados em **18 colunas**:
-
-| Coluna | Descrição |
-| :--- | :--- |
-| `NOME_PRODUTO` | Nome comercial ou denominação do medicamento |
-| `PRINCIPIO_ATIVO` | Substância(s) ativa(s) (ex.: *cloridrato de metformina, dapagliflozina, gliclazida*) |
-| `CLASSE_TERAPEUTICA` | Classificação farmacológica (ex.: *ANTIDIABETICOS*) |
-| `CATEGORIA_REGULATORIA` | Tipo de registro (Genérico, Similar, Novo, Biológico, etc.) |
-| `SITUACAO_REGISTRO` | Status atual do registro sanitário (ex.: *Ativo*) |
-| `EMPRESA_DETENTORA_REGISTRO` | CNPJ e razão social do laboratório fabricante |
-| `FORMA_FARMACEUTICA_BULA` | Apresentação física (Comprimido revestido, solução injetável, etc.) |
-| `USO_INDICADO` | Faixa etária e via de administração (ex.: *Adultos e crianças (>10 anos) / Oral*) |
-| `APRESENTACAO_BULA` | Concentrações e dosagens disponíveis (ex.: *500 mg, 850 mg ou 1000 mg*) |
-| `PARA_QUE_SERVE` | Indicações terapêuticas principais e secundárias |
-| `COMO_FUNCIONA` | Mecanismo de ação fisiológico no controle glicêmico |
-| `CONTRAINDICACOES` | Condições clínicas em que o medicamento não deve ser utilizado |
-| `PRECAUCOES` | Alertas clínicos, riscos (ex.: acidose láctica, hipoglicemia) e cuidados especiais |
-| `TIPO_PRODUTO` | Classificação geral do item (`MEDICAMENTO`) |
-| `DATA_FINALIZACAO_PROCESSO` | Data de conclusão do processo regulatório |
-| `NUMERO_REGISTRO_PRODUTO` | Código oficial de registro do medicamento |
-| `DATA_VENCIMENTO_REGISTRO` | Validade do registro regulatório |
-| `NUMERO_PROCESSO` | Número do processo administrativo na agência reguladora |
-
-## 🛠️ Tecnologias e Bibliotecas Utilizadas
-
-- **[Streamlit](https://streamlit.io/)**: Construção da interface web interativa.
-- **[LangChain](https://www.langchain.com/)**: Orquestração de todo o fluxo RAG (`langchain-community`, `langchain-text-splitters`, `langchain-chroma`, `langchain-groq`, `langchain-huggingface`).
-- **[ChromaDB](https://www.trychroma.com/)**: Banco de dados vetorial para busca semântica.
-- **[Groq Cloud API](https://groq.com/)**: Inferência em alta velocidade utilizando o modelo `openai/gpt-oss-120b`.
-- **[Hugging Face Sentence Transformers](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)**: Geração local de embeddings (`all-MiniLM-L6-v2`).
-- **[PyPDF](https://pypdf.readthedocs.io/)**: Extração e leitura de páginas do documento PDF.
-- **[Python-dotenv](https://pypi.org/project/python-dotenv/)**: Gerenciamento seguro de variáveis de ambiente.
-
-## ⚙️ Pré-requisitos e Instalação
-
-### 1. Clonar o repositório
 ```bash
-git clone [https://github.com/seu-usuario/seu-repositorio.git](https://github.com/seu-usuario/seu-repositorio.git)
-cd seu-repositorio
-```
-
-### 2. Criar e ativar um ambiente virtual (recomendado)
-```bash
-# Windows
+git clone https://github.com/Equipe-FalaBula-FMU/Projeto-FalaBula.git
+cd Projeto-FalaBula
 python -m venv .venv
-.venv\Scripts\activate
-
-# Linux / macOS
-python3 -m venv .venv
-source .venv/bin/activate
+# Windows: .venv\Scripts\python.exe -m pip install -r requirements.txt
+# macOS/Linux: .venv/bin/python -m pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-### 3. Instalar as dependências
-Crie um arquivo `requirements.txt` na raiz do projeto com o seguinte conteúdo:
-
-```txt
-streamlit
-python-dotenv
-langchain-community
-langchain-text-splitters
-langchain-chroma
-langchain-groq
-langchain-huggingface
-pypdf
-sentence-transformers
-```
-
-Em seguida, execute o comando de instalação:
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configurar as variáveis de ambiente
-Crie um arquivo chamado `.env` na raiz do projeto e insira sua chave de API da Groq:
+Crie um arquivo local `.env` com a chave:
 
 ```env
-GROQ_API_KEY="CHAVE_DE_API_DA_GROQ"
+GROQ_API_KEY=COLE_SUA_CHAVE_AQUI
 ```
 
-## 🚀 Como Executar o Projeto
-
-Certifique-se de que o arquivo PDF da base de conhecimento esteja na raiz do diretório do projeto e execute o comando abaixo no terminal:
+Execute:
 
 ```bash
-python -m streamlit run app.py
+python -m streamlit run frontend.py
 ```
 
-O aplicativo será aberto automaticamente no seu navegador padrão (geralmente em `http://localhost:8501`). Para interromper a execução do servidor, pressione `Ctrl + C` no terminal.
+A aplicação abre normalmente em http://localhost:8501. Para execução online, configure `GROQ_API_KEY` no campo privado **Secrets** da aplicação Streamlit, nunca no GitHub. Em implantações com escopo de segredos do Streamlit, a variável precisa estar disponível ao processo.
 
-## 📁 Estrutura de Arquivos Recomendada
+## Arquitetura
+
+1. **Frontend** — `frontend.py` e `style.css`, com tela de acesso demonstrativa (sem autenticação) e chat responsivo.
+2. **Documentos** — PDFs em `documentos/`, listados automaticamente.
+3. **Leitura e indexação leve** — `falabula_core.py` extrai o texto dos PDFs com `pypdf`, sem carregar modelos de embeddings ou banco vetorial pesado na memória.
+4. **Consulta** — catálogo determinístico para listagens; para perguntas específicas, primeiro identifica a bula pelo nome comercial ou princípio ativo, depois recupera as páginas pertinentes exclusivamente desse PDF e usa a API Groq (`openai/gpt-oss-120b`).
+5. **Rastreabilidade** — cada resposta apresenta, em uma seção expansível, os nomes dos PDFs e as páginas dos trechos recuperados. Essa lista é uma trilha de recuperação, não uma garantia automática de correção de cada afirmação.
+6. **Atualização da base** — assinatura baseada em nome, tamanho e data de modificação dos PDFs para invalidar o índice em cache quando os documentos mudam.
+
+O arquivo `app.py` é agora um **ponto de entrada compatível com Streamlit Cloud** e carrega a mesma interface de `frontend.py`. A versão original de `app.py` permanece na branch de backup. **Ambos os comandos de execução iniciam a mesma aplicação.**
+
+## Perguntas de validação inicial
+
+- Para que serve o Mounjaro, segundo a bula?
+- Quais contraindicações constam na bula do Glifage?
+- Que cuidados a bula do Lantus informa?
+- Quais reações adversas constam na bula do Januvia?
+- O FalaBula possui informações documentadas sobre um medicamento que ainda não está na pasta?
+- Uma bula prova que o medicamento está disponível no Farmácia Popular? (Resposta esperada: **não**; exige fonte oficial específica e atualizada.)
+
+**Observação:** a resposta de IA pode conter erros. Confira sempre o conteúdo integral da bula e seus dados de referência; não use a aplicação para decisões clínicas.
+
+## Organização do repositório
 
 ```text
-📦 chatbot-farmaceutico-diabetes
- ┣ 📜 app.py                                       # Código principal da aplicação Streamlit e pipeline RAG
- ┣ 📜 Base_Unica_Diabetes_Posologia_Mapeada.xlsx   # Planilha original com os 5.761 registros mapeados
- ┣ 📜 Base_Unica_Diabetes_Posologia_Mapeada.pdf    # Documento PDF consumido pelo PyPDFLoader no RAG
- ┣ 📜 requirements.txt                             # Lista de dependências do Python
- ┣ 📜 .env                                         # Variáveis de ambiente (não versionado no Git)
- ┗ 📜 README.md                                    # Documentação do projeto
+Projeto-FalaBula/
+├── documentos/       # PDFs indexados automaticamente pelo frontend
+├── falabula_core.py  # catálogo, identificação e recuperação de documentos
+├── frontend.py       # interface atual, genérica
+├── style.css         # estilos responsivos
+├── requirements.txt  # dependências
+├── app.py            # entrada Streamlit Cloud que executa frontend.py
+├── GuiaDiabetes.pdf  # legado
+├── Base_Unica_Diabetes_Posologia_Mapeada.pdf  # legado
+└── README.md
 ```
 
-## ⚠️ Aviso Legal (Disclaimer Médico)
+## Histórico e preservação
 
-Este chatbot possui finalidade exclusivamente **educativa, acadêmica e informativa**. As respostas geradas pelo sistema são baseadas em dados de bulas e registros públicos, mas **não substituem, em hipótese alguma, a consulta, o diagnóstico ou a prescrição de um médico, endocrinologista ou farmacêutico profissional**. Nunca inicie, altere a dosagem ou interrompa o uso de medicamentos para diabetes sem orientação médica.
+A versão anterior do repositório oficial está preservada na branch [`backup/antes-correcao-equipe-2026-11-26`](https://github.com/Equipe-FalaBula-FMU/Projeto-FalaBula/tree/backup/antes-correcao-equipe-2026-11-26).
+
+## Responsabilidade
+
+Este é um protótipo acadêmico. As respostas são limitadas às bulas presentes na pasta `documentos/`. Informações sobre disponibilidade no SUS, Farmácia Popular, preços, estoque e elegibilidade devem ser verificadas em fontes governamentais atuais, não deduzidas de bulas.
+
+
+## Diagnóstico e testes de regressão
+
+A aplicação informa a versão do núcleo no menu lateral. O comportamento esperado:
+
+- **"Quais medicamentos estão cadastrados?"**: lista exatamente todos os PDFs da pasta, sem gerar a relação por IA.
+- **"Para que serve o Mounjaro?"**: seleciona exclusivamente o PDF do Mounjaro; não utiliza excertos de insulina ou metformina.
+- **"Quais são os efeitos adversos da dapagliflozina?"**: consulta somente o PDF da dapagliflozina.
+- **"Quais medicamentos há para pressão alta?"**: caso não haja bula e medicamento específico, solicita identificação ou informa limitação; não inventa lista.
+- **"Explique a posologia"** sem medicamento identificado: solicita o nome do produto, sem prescrever.
+
+Executar testes automatizados de funções puras com `python -m unittest discover -s tests -v`. A API Groq e a disponibilidade da implantação no Streamlit Cloud devem ser validadas separadamente, pois dependem do ambiente externo.
