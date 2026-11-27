@@ -220,10 +220,11 @@ def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
             return "Informe o nome do medicamento para consultar sua bula. Não posso prescrever tratamentos.", []
         # Prioriza fontes gerais; admite bulas como fontes limitadas de informação.
         termos = {t for t in p.split() if len(t) > 3 and t not in PALAVRAS_COMUNS
-                  and t not in {"tipos", "tipo", "quais", "quaisquer", "diferenca", "explique", "principais"}}
+                  and t not in {"tipos", "tipo", "quais", "quaisquer", "diferenca", "explique", "principais", "existem", "existe", "conhecidos", "classificacao"}}
         if not termos:
             return "Especifique a doença ou assunto que deseja consultar.", []
         candidatos = []
+        chaves_gerais = {chave_documento(a) for a in arquivos if documento_geral(a)}
         for arquivo in arquivos:
             for numero, texto in base.get(chave_documento(arquivo), base.get(arquivo.name, [])):
                 palavras = set(normalizar(texto).split())
@@ -232,13 +233,17 @@ def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
                     nota = len(comuns) * 10 + (30 if documento_geral(arquivo) else 0)
                     if "tipos" in p.split() or "tipo" in p.split():
                         nota += 5 * int("tipo" in palavras or "tipos" in palavras)
+                        nota += 8 * int("classificacao" in palavras or "classificacoes" in palavras)
                     candidatos.append((nota, chave_documento(arquivo), numero, texto))
         candidatos.sort(key=lambda x: (-x[0], x[1], x[2]))
-        # Diversifica os documentos, sem deixar uma única bula dominar a consulta.
+        # Fontes gerais relevantes prevalecem sobre bulas em perguntas conceituais.
+        gerais = [item for item in candidatos if item[1] in chaves_gerais]
+        if gerais:
+            candidatos = gerais
         trechos = []
         contagem = Counter()
         for _, nome, pagina, texto in candidatos:
-            if contagem[nome] >= 2:
+            if contagem[nome] >= (6 if nome in chaves_gerais else 2):
                 continue
             trechos.append((nome, pagina, texto[:4200]))
             contagem[nome] += 1
@@ -274,7 +279,7 @@ def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
             "Você é um assistente acadêmico de consulta a bulas. " +
             ("Responda em português claro somente com os documentos apresentados. "
              "Em perguntas gerais, explique apenas o que os trechos sustentam, distinguindo bulas de diretrizes; "
-             "não trate indicações de medicamentos como classificação completa de doenças. "
+             "não trate indicações de medicamentos como classificação completa de doenças. Use as fontes gerais recuperadas como referência principal e não extrapole os trechos. "
              "Se a base não permitir uma resposta completa, declare a limitação. "
              "Não recomende medicamentos nem misture orientações de produtos distintos. "
              if consulta_geral else "Responda em português claro somente com o texto da bula apresentada. Identifique o medicamento pelo nome da bula. ") + 
