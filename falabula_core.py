@@ -55,6 +55,13 @@ def assinatura(arquivos: list[Path]) -> tuple:
         (str(p), p.stat().st_size, p.stat().st_mtime_ns) for p in arquivos
     )
 
+def chave_documento(p: Path) -> str:
+    # Caminho relativo à base evita colisões entre PDFs homônimos.
+    partes = p.parts
+    if "documentos" in partes:
+        return "/".join(partes[partes.index("documentos") + 1:])
+    return p.name
+
 def documento_geral(p: Path) -> bool:
     return any(x in {"doencas", "protocolos_clinicos", "orientacoes_oficiais"} for x in p.parts[:-1])
 
@@ -65,16 +72,16 @@ def nome_exibicao(nome_arquivo: str) -> str:
 
 def pergunta_catalogo(pergunta: str) -> bool:
     p = normalizar(pergunta)
-    termos = ("medicamento", "remedio", "bula", "farmaco", "base de conhecimento")
-    lista = (
-        "quais", "liste", "listar", "lista", "relacao", "catalogo", "quantos",
-        "todos", "disponiveis", "cadastrados", "registrados", "possui",
-        "existem", "temos", "tem na base", "tem no sistema", "estao na base",
-    )
-    return (
-        (any(x in p for x in termos) and any(x in p for x in lista))
-        or p in ("o que voce conhece", "o que tem na base", "que medicamentos tem")
-    )
+    if p in ("o que voce conhece", "o que tem na base", "que medicamentos tem"):
+        return True
+    objeto = re.search(r"\b(medicamentos?|remedios?|bulas?|farmacos?|documentos?)\b", p)
+    if not objeto:
+        return False
+    # Perguntas clínicas não são pedidos de catálogo.
+    if re.search(r"\b(efeitos?|reacoes|contraindicacoes|indicacoes|posologia|dose|trata|tratam|diabetes|pressao|doenca|doencas)\b", p):
+        return False
+    return bool(re.search(r"\b(cadastrad[oa]s?|disponiveis|registrad[oa]s?|catalogo|liste|listar|quantos|quantas|lista)\b", p)
+                or re.search(r"\b(na base|no sistema|no falabula)\b", p))
 
 def resposta_catalogo(arquivos: list[Path]) -> str:
     arquivos = [p for p in arquivos if not documento_geral(p)]
@@ -102,7 +109,7 @@ def identificar_documentos(pergunta: str, arquivos: list[Path]) -> list[Path]:
         melhor = 0
         for alias in apelidos:
             token = " " + normalizar(alias) + " "
-            if len(token.strip()) > 3 and token in frase:
+            if len(token.strip()) >= 3 and token in frase:
                 melhor = max(melhor, len(token.strip()))
         if melhor:
             correspondencias[p] = melhor
@@ -111,7 +118,20 @@ def identificar_documentos(pergunta: str, arquivos: list[Path]) -> list[Path]:
     # "Glifage XR" não deve retornar "Glifage" comum.
     if correspondencias:
         maior = max(correspondencias.values())
-        return [p for p, nota in correspondencias.items() if nota == maior]
+        # Exclui apenas nomes contidos em outro alias mais específico.
+        selecionados = list(correspondencias)
+        for curto in list(selecionados):
+            aliases = CATALOGO.get(curto.name, ("", (nome_exibicao(curto.name),)))[1]
+            if any(
+                normalizar(a) != normalizar(b) and (" " + normalizar(a) + " ") in (" " + normalizar(b) + " ")
+                and (" " + normalizar(b) + " ") in frase
+                for outro in correspondencias if outro != curto
+                for a in aliases
+                for b in CATALOGO.get(outro.name, ("", (nome_exibicao(outro.name),)))[1]
+                if (" " + normalizar(a) + " ") in frase
+            ):
+                selecionados.remove(curto)
+        return selecionados
 
     return []
 
@@ -131,7 +151,7 @@ def carregar_paginas(arquivos: list[Path]) -> dict[str, list[tuple[int, str]]]:
             if not paginas:
                 falhas.append(f"{arquivo.name}: não possui texto selecionável")
             else:
-                base[arquivo.name] = paginas
+                base[chave_documento(arquivo)] = paginas
         except Exception as erro:
             falhas.append(f"{arquivo.name}: PDF inválido ({type(erro).__name__})")
     if falhas:
@@ -164,13 +184,13 @@ def recuperar_paginas(pergunta: str, documentos: list[Path], base: dict,
     termos = set(normalizar(pergunta).split()) - PALAVRAS_COMUNS
     candidatos = []
     for arquivo in documentos:
-        for numero, texto in base.get(arquivo.name, []):
+        for numero, texto in base.get(chave_documento(arquivo), base.get(arquivo.name, [])):
             conteudo = normalizar(texto)
             ocorrencias = sum(min(conteudo.count(t), 8) for t in termos if len(t) > 3)
             ancoras = ANCORAS.get(objetivo, ())
             bonus = 12 if any(a in conteudo for a in ancoras) else 0
             bonus += 2 if numero <= 3 else 0
-            candidatos.append((bonus + ocorrencias, arquivo.name, numero, texto))
+            candidatos.append((bonus + ocorrencias, chave_documento(arquivo), numero, texto))
 
     candidatos.sort(key=lambda x: (-x[0], x[1], x[2]))
     saida = []
@@ -195,7 +215,7 @@ def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
         p = normalizar(pergunta)
         # Não buscar doses ou recomendações de medicamentos sem identificar o produto.
         if foco(pergunta) in {"posologia", "contraindicacao", "reacoes"} or any(
-            t in p for t in ("qual remedio", "qual medicamento", "devo tomar", "posso tomar", "me receite")
+            t in p for t in ("qual remedio", "qual medicamento", "quais remedios", "quais medicamentos", "devo tomar", "posso tomar", "me receite", "farmacia popular", "estoque", "preco", "disponivel no sus")
         ):
             return "Informe o nome do medicamento para consultar sua bula. Não posso prescrever tratamentos.", []
         # Prioriza fontes gerais; admite bulas como fontes limitadas de informação.
@@ -205,12 +225,14 @@ def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
             return "Especifique a doença ou assunto que deseja consultar.", []
         candidatos = []
         for arquivo in arquivos:
-            for numero, texto in base.get(arquivo.name, []):
+            for numero, texto in base.get(chave_documento(arquivo), base.get(arquivo.name, [])):
                 palavras = set(normalizar(texto).split())
                 comuns = termos & palavras
                 if comuns:
-                    nota = len(comuns) * 10 + (5 if documento_geral(arquivo) else 0)
-                    candidatos.append((nota, arquivo.name, numero, texto))
+                    nota = len(comuns) * 10 + (30 if documento_geral(arquivo) else 0)
+                    if "tipos" in p.split() or "tipo" in p.split():
+                        nota += 5 * int("tipo" in palavras or "tipos" in palavras)
+                    candidatos.append((nota, chave_documento(arquivo), numero, texto))
         candidatos.sort(key=lambda x: (-x[0], x[1], x[2]))
         # Diversifica os documentos, sem deixar uma única bula dominar a consulta.
         trechos = []
