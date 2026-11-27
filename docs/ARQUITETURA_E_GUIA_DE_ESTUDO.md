@@ -1,6 +1,10 @@
-# FalaBula 2.3 — Arquitetura técnica
+# FalaBula 2.4 — Arquitetura técnica
 
 Documentação técnica da aplicação. Baseado nos arquivos da branch main: [frontend.py](../frontend.py), [falabula_core.py](../falabula_core.py), [app.py](../app.py), [requirements.txt](../requirements.txt) e [style.css](../style.css). Descreve a implementação, não uma certificação da implantação ou da qualidade clínica.
+
+## Atualização 2.4
+
+O guia de diabetes foi copiado para `documentos/doencas/`. Consultas gerais com documentos gerais relevantes recuperam exclusivamente essas fontes, com até seis páginas por documento dentro do limite total de seis páginas. Bulas são alternativa quando não há correspondência em fontes gerais; consultas específicas continuam isoladas por medicamento. A validade clínica do guia deve ser conferida pela equipe.
 
 ## 1. Objetivo
 
