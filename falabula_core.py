@@ -185,8 +185,8 @@ def recuperar_paginas(pergunta: str, documentos: list[Path], base: dict,
 def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
                       api_key: str) -> tuple[str, list[str]]:
     if not arquivos:
-        return "A pasta documentos não possui bulas PDF.", []
-    if pergunta_catalogo(pergunta):
+        return "A pasta documentos não possui arquivos PDF.", []
+    if pergunta_catalogo(pergunta) and not identificar_documentos(pergunta, arquivos):
         return resposta_catalogo(arquivos), []
 
     encontrados = identificar_documentos(pergunta, arquivos)
@@ -241,7 +241,7 @@ def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
 
     if not api_key:
         return (
-            "A bula foi localizada, mas a chave da API Groq não está configurada. "
+            "Os documentos foram localizados, mas a chave da API Groq não está configurada. "
             "Verifique os Secrets do Streamlit.", fontes
         )
 
@@ -249,7 +249,7 @@ def responder_pergunta(pergunta: str, arquivos: list[Path], base: dict,
     from groq import Groq
     mensagens = [
         {"role": "system", "content": (
-            "Você é um assistente acadêmico de consulta a bulas. "
+            "Você é um assistente acadêmico de consulta a bulas. " +
             ("Responda em português claro somente com os documentos apresentados. "
              "Em perguntas gerais, explique apenas o que os trechos sustentam, distinguindo bulas de diretrizes; "
              "não trate indicações de medicamentos como classificação completa de doenças. "
