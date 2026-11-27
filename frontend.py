@@ -81,6 +81,17 @@ def mostrar_fontes(fontes):
         st.caption("Estas páginas foram recuperadas para a consulta. Confira o PDF completo para confirmar as informações. O link abre a versão cadastrada no GitHub, não necessariamente a revisão mais recente do fabricante.")
 
 
+def mostrar_rodape():
+    st.markdown(
+        '<div class="footer">'
+        '<strong>FalaBula</strong> | Projeto acadêmico de Inteligência Artificial — FIAM-FMU'
+        '<br>© 2026 Equipe FalaBula — Direitos autorais sobre o conteúdo original do projeto.'
+        '<br>Documentos de terceiros pertencem aos respectivos titulares.'
+        '<br>Versão 2.5.1 · Informação responsável</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def responder(pergunta, identificacao):
     arquivos = listar_bulas()
     if pergunta_catalogo(pergunta) and not identificar_documentos(pergunta, arquivos):
@@ -125,6 +136,7 @@ if not st.session_state.acesso_liberado:
         st.caption(
             "Acesso demonstrativo: não há autenticação de usuários."
         )
+    mostrar_rodape()
 else:
     st.markdown(
         '<div class="hero"><div class="eyebrow">SEU ASSISTENTE DE BULAS</div>'
@@ -148,7 +160,7 @@ else:
         st.divider()
         st.caption(f"Bulas cadastradas: {sum(not documento_geral(p) for p in arquivos)}")
         st.caption(f"Documentos gerais: {sum(documento_geral(p) for p in arquivos)}")
-        st.caption("Versão 2.5.0 — estável — 27/11/2026")
+        st.caption("Versão 2.5.1 — estável — 27/11/2026")
         with st.expander("Documentos disponíveis"):
             for arquivo in arquivos:
                 st.caption(chave_documento(arquivo))
@@ -185,36 +197,16 @@ else:
     else:
         selecionada = None
 
-    for mensagem in st.session_state.mensagens_falabula:
-        with st.chat_message(
-            mensagem["role"],
-            avatar="👤" if mensagem["role"] == "user" else "💬",
-        ):
-            st.markdown(mensagem["content"])
-            mostrar_fontes(mensagem.get("fontes", []))
-
-    pergunta_digitada = st.chat_input(
-        "Pergunte sobre medicamentos ou assuntos presentes nos documentos..."
-    )
-    pergunta = pergunta_digitada or selecionada
-    if pergunta:
-        st.session_state.mensagens_falabula.append(
-            {"role": "user", "content": pergunta}
-        )
-        with st.chat_message("user", avatar="👤"):
-            st.markdown(pergunta)
-        with st.chat_message("assistant", avatar="💬"):
-            try:
-                with st.spinner("Consultando documentos cadastrados..."):
-                    resposta, fontes = responder(pergunta, assinatura)
-            except Exception as erro:
-                st.error(f"Não foi possível consultar os documentos: {erro}")
-            else:
-                st.markdown(resposta)
-                mostrar_fontes(fontes)
-                st.session_state.mensagens_falabula.append(
-                    {"role": "assistant", "content": resposta, "fontes": fontes}
-                )
+    # O histórico é renderizado antes do campo de pesquisa, inclusive novas respostas.
+    historico = st.container()
+    with historico:
+        for mensagem in st.session_state.mensagens_falabula:
+            with st.chat_message(
+                mensagem["role"],
+                avatar="👤" if mensagem["role"] == "user" else "💬",
+            ):
+                st.markdown(mensagem["content"])
+                mostrar_fontes(mensagem.get("fontes", []))
 
     st.markdown(
         '<div class="medical-note"><strong>Atenção:</strong> '
@@ -224,11 +216,31 @@ else:
         unsafe_allow_html=True,
     )
 
-st.markdown(
-    '<div class="footer">'
-    '<strong>FalaBula</strong> | Projeto acadêmico de Inteligência Artificial — FIAM-FMU'
-    '<br>© 2026 Equipe FalaBula — Direitos autorais sobre o conteúdo original do projeto.'
-    '<br>Documentos de terceiros pertencem aos respectivos titulares.'
-    '<br>Versão 2.5.0 · Informação responsável</div>',
-    unsafe_allow_html=True,
-)
+    # O chat_input dentro de um container fica no fluxo da página,
+    # permitindo que a autoria apareça imediatamente abaixo do campo.
+    with st.container():
+        pergunta_digitada = st.chat_input(
+            "Pergunte sobre medicamentos ou assuntos presentes nos documentos..."
+        )
+        mostrar_rodape()
+
+    with historico:
+        pergunta = pergunta_digitada or selecionada
+        if pergunta:
+            st.session_state.mensagens_falabula.append(
+                {"role": "user", "content": pergunta}
+            )
+            with st.chat_message("user", avatar="👤"):
+                st.markdown(pergunta)
+            with st.chat_message("assistant", avatar="💬"):
+                try:
+                    with st.spinner("Consultando documentos cadastrados..."):
+                        resposta, fontes = responder(pergunta, assinatura)
+                except Exception as erro:
+                    st.error(f"Não foi possível consultar os documentos: {erro}")
+                else:
+                    st.markdown(resposta)
+                    mostrar_fontes(fontes)
+                    st.session_state.mensagens_falabula.append(
+                        {"role": "assistant", "content": resposta, "fontes": fontes}
+                    )
