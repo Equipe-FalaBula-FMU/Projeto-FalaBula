@@ -148,7 +148,7 @@ else:
         st.divider()
         st.caption(f"Bulas cadastradas: {sum(not documento_geral(p) for p in arquivos)}")
         st.caption(f"Documentos gerais: {sum(documento_geral(p) for p in arquivos)}")
-        st.caption("Versão 2.5 — respostas e fontes — 27/11/2026")
+        st.caption("Versão 2.5.0 — estável — 27/11/2026")
         with st.expander("Documentos disponíveis"):
             for arquivo in arquivos:
                 st.caption(chave_documento(arquivo))
@@ -225,7 +225,10 @@ else:
     )
 
 st.markdown(
-    '<div class="footer">FalaBula · versão 2.5 · Projeto acadêmico de inteligência artificial'
-    ' · Informação responsável</div>',
+    '<div class="footer">'
+    '<strong>FalaBula</strong> | Projeto acadêmico de Inteligência Artificial — FIAM-FMU'
+    '<br>© 2026 Equipe FalaBula — Direitos autorais sobre o conteúdo original do projeto.'
+    '<br>Documentos de terceiros pertencem aos respectivos titulares.'
+    '<br>Versão 2.5.0 · Informação responsável</div>',
     unsafe_allow_html=True,
 )
