@@ -6,6 +6,10 @@ Projeto acadêmico de chatbot que responde a perguntas em português sobre **med
 
 > **Atenção:** conteúdo informativo, não é diagnóstico, prescrição nem orientação de tratamento individual. Não inicie, altere ou interrompa medicamentos com base nas respostas. Consulte profissional habilitado.
 
+## Versão 2.5.1 — ajuste visual (27/11/2026)
+
+O campo de perguntas fica no fluxo da página, seguido imediatamente pelo rodapé de autoria. O histórico e o aviso informativo permanecem acima do campo. A alteração é exclusivamente visual, sem modificação do núcleo RAG. A versão 2.5.0 permanece preservada em `stable/v2.5.0`; a versão 2.5.1 requer conferência visual no Streamlit.
+
 ## Versão oficial 2.5.0 — estável (27/11/2026)
 
 Versão de referência para a apresentação acadêmica. A equipe informou a aprovação dos testes manuais da versão 2.5; o rodapé institucional foi incluído posteriormente, sem mudanças na lógica RAG. A revisão visual final do rodapé e a confirmação da publicação 2.5.0 no Streamlit permanecem pendentes. A homologação acadêmica não equivale a validação clínica.
@@ -155,7 +159,7 @@ Este é um protótipo acadêmico. As respostas são limitadas aos documentos pre
 
 ## Diagnóstico e testes de regressão
 
-A interface informa a versão 2.5.0, de 27/11/2026, e a quantidade de PDFs no menu lateral. O comportamento esperado:
+A interface informa a versão 2.5.1, de 27/11/2026, e a quantidade de PDFs no menu lateral. O comportamento esperado:
 
 - **"Quais medicamentos estão cadastrados?"**: lista apenas os PDFs classificados como bulas, sem gerar a relação por IA.
 - **"Para que serve o Mounjaro?"**: seleciona exclusivamente o PDF do Mounjaro; não utiliza excertos de insulina ou metformina.
