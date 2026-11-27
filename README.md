@@ -6,6 +6,12 @@ Projeto acadêmico de chatbot que responde a perguntas em português sobre **med
 
 > **Atenção:** conteúdo informativo, não é diagnóstico, prescrição nem orientação de tratamento individual. Não inicie, altere ou interrompa medicamentos com base nas respostas. Consulte profissional habilitado.
 
+## Versão oficial 2.5.0 — estável (27/11/2026)
+
+Versão de referência para a apresentação acadêmica. A equipe informou a aprovação dos testes manuais da versão 2.5; o rodapé institucional foi incluído posteriormente, sem mudanças na lógica RAG. A revisão visual final do rodapé e a confirmação da publicação 2.5.0 no Streamlit permanecem pendentes. A homologação acadêmica não equivale a validação clínica.
+
+**Autoria:** © 2026 Equipe FalaBula — direitos autorais sobre o conteúdo original do projeto. Documentos de terceiros pertencem aos respectivos titulares. A indicação de autoria não constitui uma licença de software nem implica endosso institucional da FIAM-FMU.
+
 ## Versão 2.5 — respostas e fontes (27/11/2026)
 
 O prompt orienta o modelo a apresentar respostas em linguagem natural, sem marcadores técnicos de página. A função `limpar_referencias_tecnicas` remove marcações explícitas como `【PÁGINA: 1】` e preserva siglas, unidades e conteúdo clínico. Os documentos e páginas recuperados continuam disponíveis na seção **Fontes consultadas**, com links para os PDFs completos. Testes de regressão específicos foram incluídos em `tests/test_limpeza_referencias.py`.
@@ -149,7 +155,7 @@ Este é um protótipo acadêmico. As respostas são limitadas aos documentos pre
 
 ## Diagnóstico e testes de regressão
 
-A interface informa a versão 2.5, de 27/11/2026, e a quantidade de PDFs no menu lateral. O comportamento esperado:
+A interface informa a versão 2.5.0, de 27/11/2026, e a quantidade de PDFs no menu lateral. O comportamento esperado:
 
 - **"Quais medicamentos estão cadastrados?"**: lista apenas os PDFs classificados como bulas, sem gerar a relação por IA.
 - **"Para que serve o Mounjaro?"**: seleciona exclusivamente o PDF do Mounjaro; não utiliza excertos de insulina ou metformina.
