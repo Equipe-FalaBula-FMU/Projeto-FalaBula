@@ -25,7 +25,7 @@ As subpastas são reconhecidas automaticamente quando contêm PDFs. Não é nece
 
 ## Links úteis
 
-- [Guia de estudo e desenho da arquitetura](docs/ARQUITETURA_E_GUIA_DE_ESTUDO.md)
+- [Documentação técnica e desenho da arquitetura](docs/ARQUITETURA_E_GUIA_DE_ESTUDO.md)
 
 - [Aplicação online — Streamlit](https://projeto-falabula-dashshp2g9tj3fr9jop2yv.streamlit.app/)
 - [Pasta de bulas no GitHub](https://github.com/Equipe-FalaBula-FMU/Projeto-FalaBula/tree/main/documentos)
@@ -86,7 +86,7 @@ A aplicação abre normalmente em http://localhost:8501. Para execução online,
 
 ## Arquitetura
 
-**[Arquitetura técnica e guia de estudo para apresentação](docs/ARQUITETURA_E_GUIA_DE_ESTUDO.md)** — diagrama Mermaid, tecnologias de frontend e backend, fluxo RAG, infraestrutura, limitações e roteiro de apresentação.
+**[Arquitetura técnica](docs/ARQUITETURA_E_GUIA_DE_ESTUDO.md)** — diagrama Mermaid, tecnologias de frontend e backend, fluxo RAG, infraestrutura e limitações.
 
 
 1. **Frontend** — `frontend.py` e `style.css`, com tela de acesso demonstrativa (sem autenticação) e chat responsivo.
